@@ -1,0 +1,135 @@
+import 'package:flutter/material.dart';
+import '../models/case_scenario_model.dart';
+
+class SimulationProvider extends ChangeNotifier {
+  List<CaseScenario> _cases = [];
+  int _currentCaseIndex = 0;
+  Map<String, String> _selectedOptions = {}; // caseId -> optionId
+  bool _isLoading = false;
+
+  List<CaseScenario> get cases => _cases;
+  int get currentCaseIndex => _currentCaseIndex;
+  CaseScenario? get currentCase =>
+      _currentCaseIndex < _cases.length ? _cases[_currentCaseIndex] : null;
+  bool get isLoading => _isLoading;
+  bool get hasMoreCases => _currentCaseIndex < _cases.length - 1;
+
+  // Load cases
+  Future<void> loadCases() async {
+    _isLoading = true;
+    notifyListeners();
+
+    // Load sample cases (in production, fetch from Supabase)
+    await Future.delayed(const Duration(milliseconds: 300)); // Simulate network
+    _cases = CaseData.getSampleCases();
+    _currentCaseIndex = 0;
+    _selectedOptions = {};
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  // Select an option for current case
+  void selectOption(String optionId) {
+    if (currentCase != null) {
+      _selectedOptions[currentCase!.id] = optionId;
+      notifyListeners();
+    }
+  }
+
+  // Get selected option for a case
+  String? getSelectedOption(String caseId) {
+    return _selectedOptions[caseId];
+  }
+
+  // Check if current case has a selection
+  bool get hasSelection =>
+      currentCase != null && _selectedOptions.containsKey(currentCase!.id);
+
+  // Get score for a case
+  Map<String, int>? getScoreForCase(String caseId, String locale) {
+    final optionId = _selectedOptions[caseId];
+    if (optionId == null) {
+      debugPrint('❌ No option selected for case: $caseId');
+      return null;
+    }
+
+    final caseScenario = _cases.firstWhere(
+      (c) => c.id == caseId,
+      orElse: () => _cases.first,
+    );
+
+    debugPrint(
+      '📊 Getting score for case: ${caseScenario.id}, locale: $locale, selected option: $optionId',
+    );
+
+    final options = caseScenario.getOptions(locale);
+    debugPrint(
+      '📋 Available options: ${options.map((o) => '${o.id}(${o.totalScore})').join(', ')}',
+    );
+
+    final selectedOption = options.firstWhere(
+      (o) => o.id == optionId,
+      orElse: () {
+        debugPrint(
+          '⚠️ Option $optionId not found! Falling back to first option',
+        );
+        return options.first;
+      },
+    );
+
+    debugPrint(
+      '✅ Selected option scores - F:${selectedOption.fairnessScore}, E:${selectedOption.evidenceScore}, B:${selectedOption.biasScore}, Total:${selectedOption.totalScore}',
+    );
+
+    return {
+      'fairness': selectedOption.fairnessScore,
+      'evidence': selectedOption.evidenceScore,
+      'bias': selectedOption.biasScore,
+      'total': selectedOption.totalScore,
+    };
+  }
+
+  // Move to next case
+  void nextCase() {
+    if (hasMoreCases) {
+      _currentCaseIndex++;
+      notifyListeners();
+    }
+  }
+
+  // Reset simulation
+  void reset() {
+    _currentCaseIndex = 0;
+    _selectedOptions = {};
+    notifyListeners();
+  }
+
+  // Get case by index
+  CaseScenario? getCaseByIndex(int index) {
+    if (index >= 0 && index < _cases.length) {
+      return _cases[index];
+    }
+    return null;
+  }
+
+  // Check if case is completed
+  bool isCaseCompleted(String caseId) {
+    return _selectedOptions.containsKey(caseId);
+  }
+
+  // Get total score from all completed cases
+  int getTotalScore(String locale) {
+    int total = 0;
+    for (final entry in _selectedOptions.entries) {
+      final score = getScoreForCase(entry.key, locale);
+      if (score != null) {
+        total += score['total'] ?? 0;
+      }
+    }
+    return total;
+  }
+
+  // Get number of completed cases
+  int get completedCasesCount => _selectedOptions.length;
+}
