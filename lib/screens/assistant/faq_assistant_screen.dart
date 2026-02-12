@@ -46,7 +46,19 @@ class _FaqAssistantScreenState extends State<FaqAssistantScreen> {
   }
 
   Future<void> _startListening(bool isHindi) async {
-    if (!_speechAvailable) return;
+    if (!_speechAvailable) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isHindi
+                ? 'वॉइस इनपुट इस डिवाइस पर उपलब्ध नहीं है'
+                : 'Voice input is not available on this device',
+          ),
+        ),
+      );
+      return;
+    }
 
     await _speech.listen(
       onResult: (result) {
@@ -66,7 +78,7 @@ class _FaqAssistantScreenState extends State<FaqAssistantScreen> {
 
   void _onSearch(String query, bool isHindi) {
     setState(() {
-      _searchQuery = query.toLowerCase();
+      _searchQuery = query.trim().toLowerCase();
 
       // Voice Intent Detection (3 hardcoded intents)
       final intentDetected = _detectVoiceIntent(_searchQuery, isHindi);
@@ -78,14 +90,9 @@ class _FaqAssistantScreenState extends State<FaqAssistantScreen> {
         _filteredFaqs = [];
       } else {
         final allFaqs = _getFaqs(isHindi);
-        _filteredFaqs = allFaqs.where((faq) {
-          final question = (faq['question'] as String).toLowerCase();
-          final keywords = (faq['keywords'] as List<String>)
-              .map((k) => k.toLowerCase())
-              .toList();
-          return question.contains(_searchQuery) ||
-              keywords.any((k) => k.contains(_searchQuery));
-        }).toList();
+        _filteredFaqs = allFaqs
+            .where((faq) => _matchesFaq(faq, _searchQuery))
+            .toList();
       }
     });
   }
@@ -97,14 +104,14 @@ class _FaqAssistantScreenState extends State<FaqAssistantScreen> {
     // Intent 1: "After 12th/graduation judge" → Convert to eligibility query
     if ((q.contains('12') || q.contains('बारहवीं') || q.contains('12th')) &&
         (q.contains('judge') || q.contains('जज'))) {
-      return '12th judge';
+      return '12th';
     }
 
     if ((q.contains('graduation') ||
             q.contains('graduate') ||
             q.contains('ग्रेजुएशन')) &&
         (q.contains('judge') || q.contains('जज'))) {
-      return 'graduation judge';
+      return 'graduation';
     }
 
     // Intent 2: "Salary" or "pay" → Direct to salary FAQ
@@ -119,10 +126,42 @@ class _FaqAssistantScreenState extends State<FaqAssistantScreen> {
     // Intent 3: "Age limit" or "eligibility" → Direct to age/eligibility
     if ((q.contains('age') || q.contains('आयु') || q.contains('उम्र')) ||
         (q.contains('eligibility') || q.contains('पात्रता'))) {
-      return 'age eligibility';
+      return 'eligibility';
     }
 
     return null;
+  }
+
+  bool _matchesFaq(Map<String, dynamic> faq, String query) {
+    final question = (faq['question'] as String? ?? '').toLowerCase();
+    final answer = (faq['answer'] as String? ?? '').toLowerCase();
+    final keywords = (faq['keywords'] as List<dynamic>? ?? const [])
+        .map((k) => k.toString().toLowerCase())
+        .toList();
+
+    if (question.contains(query) || answer.contains(query)) {
+      return true;
+    }
+    if (keywords.any((k) => k.contains(query) || query.contains(k))) {
+      return true;
+    }
+
+    final tokens = _tokenize(query);
+    if (tokens.isEmpty) {
+      return false;
+    }
+
+    final searchable = '$question ${keywords.join(' ')} $answer';
+    return tokens.every(searchable.contains);
+  }
+
+  List<String> _tokenize(String value) {
+    return value
+        .toLowerCase()
+        .split(RegExp(r'\s+'))
+        .map((token) => token.trim())
+        .where((token) => token.length >= 2)
+        .toList();
   }
 
   List<Map<String, dynamic>> _getFaqs(bool isHindi) {
@@ -236,7 +275,7 @@ All exams have:
 
 **परीक्षा पैटर्न:**
 • अंग्रेजी - 28-32 प्रश्न
-• करंट अफेयर्स - 35-39 प्रश्न  
+• करंट अफेयर्स - 35-39 प्रश्न
 • लीगल रीजनिंग - 35-39 प्रश्न
 • लॉजिकल रीजनिंग - 28-32 प्रश्न
 • क्वांटिटेटिव - 13-17 प्रश्न'''
@@ -322,46 +361,32 @@ You can pursue LLB from any stream:
       },
       // Career
       {
-        'category': isHindi ? 'करियर' : 'Career',
-        'icon': '💼',
+        'category': isHindi ? 'वेतन और करियर' : 'Career',
+        'icon': '💰',
         'question': isHindi
             ? 'जज की सैलरी कितनी होती है?'
             : 'What is the salary of a judge?',
         'answer': isHindi
-            ? '''**न्यायाधीशों का वेतन (7वें वेतन आयोग के बाद):**
+            ? '''**वेतन राज्य कैडर और नवीनतम वेतन संशोधनों पर निर्भर करता है।**
 
-| पद | वेतन (₹/माह) |
-|---|---|
-| Civil Judge (Junior) | ₹77,840 - 1,51,670 |
-| Civil Judge (Senior) | ₹98,440 - 1,68,275 |
-| District Judge | ₹1,44,840 - 2,24,050 |
-| High Court Judge | ₹2,25,000 |
-| Supreme Court Judge | ₹2,50,000 |
+सामान्य तौर पर:
+• प्रवेश स्तर के सिविल जज को सरकारी वेतन + भत्ते मिलते हैं
+• वरिष्ठता और पदोन्नति के साथ वेतन बढ़ता है
+• आवास/चिकित्सा और संबंधित लाभ राज्य नियमों के अनुसार
 
-**अन्य लाभ:**
-• सरकारी आवास
-• वाहन सुविधा
-• पेंशन
-• मेडिकल बेनिफिट्स'''
-            : '''**Judges' Salary (Post 7th Pay Commission):**
+सटीक आंकड़ों के लिए, अपने राज्य का नवीनतम आधिकारिक न्यायिक भर्ती अधिसूचना देखें।'''
+            : '''**Salary depends on state cadre and latest pay revisions.**
 
-| Position | Salary (₹/month) |
-|---|---|
-| Civil Judge (Junior) | ₹77,840 - 1,51,670 |
-| Civil Judge (Senior) | ₹98,440 - 1,68,275 |
-| District Judge | ₹1,44,840 - 2,24,050 |
-| High Court Judge | ₹2,25,000 |
-| Supreme Court Judge | ₹2,50,000 |
+In general:
+• Entry-level civil judges receive structured government pay + allowances
+• Pay increases with seniority and promotion
+• Housing/medical and related benefits vary by state rules
 
-**Other Benefits:**
-• Government accommodation
-• Vehicle facility
-• Pension
-• Medical benefits''',
-        'keywords': ['salary', 'pay', 'वेतन', 'सैलरी', 'income'],
+For exact figures, check the latest official judicial recruitment notification for your state.''',
+        'keywords': ['salary', 'pay', 'सैलरी', 'वेतन', 'income'],
       },
       {
-        'category': isHindi ? 'करियर' : 'Career',
+        'category': isHindi ? 'वेतन और करियर' : 'Career',
         'icon': '📈',
         'question': isHindi
             ? 'जज का करियर ग्रोथ कैसा होता है?'
@@ -369,7 +394,6 @@ You can pursue LLB from any stream:
         'answer': isHindi
             ? '''**न्यायिक करियर पदानुक्रम:**
 
-```
 1. Civil Judge (Junior Division)
         ↓ (5-7 वर्ष)
 2. Civil Judge (Senior Division)
@@ -379,7 +403,6 @@ You can pursue LLB from any stream:
 4. High Court Judge
         ↓ (कॉलेजियम नियुक्ति)
 5. Supreme Court Judge
-```
 
 **विशेष अवसर:**
 • Tribunal सदस्य
@@ -387,7 +410,6 @@ You can pursue LLB from any stream:
 • Legal Advisor पद'''
             : '''**Judicial Career Hierarchy:**
 
-```
 1. Civil Judge (Junior Division)
         ↓ (5-7 years)
 2. Civil Judge (Senior Division)
@@ -397,7 +419,6 @@ You can pursue LLB from any stream:
 4. High Court Judge
         ↓ (Collegium appointment)
 5. Supreme Court Judge
-```
 
 **Special Opportunities:**
 • Tribunal Member
@@ -418,403 +439,250 @@ You can pursue LLB from any stream:
         'icon': '🏛️',
         'question': isHindi
             ? 'भारत में कितने प्रकार के न्यायालय हैं?'
-            : 'What are the different types of courts in India?',
+            : 'How many types of courts are there in India?',
         'answer': isHindi
-            ? '''**भारतीय न्यायालय प्रणाली:**
+            ? '''**भारतीय न्यायालय पदानुक्रम:**
 
-**1. सर्वोच्च न्यायालय (Supreme Court)**
-• दिल्ली में स्थित
-• सर्वोच्च अपील न्यायालय
-• मुख्य न्यायाधीश + 33 अन्य न्यायाधीश
+1. **सर्वोच्च न्यायालय** (Supreme Court)
+   • मुख्य न्यायाधीश + अन्य न्यायाधीश
+   • संविधान का अंतिम व्याख्याकार
 
-**2. उच्च न्यायालय (High Court)**
-• प्रत्येक राज्य/UT में
-• 25 उच्च न्यायालय
-• राज्य का सर्वोच्च न्यायालय
+2. **उच्च न्यायालय** (High Courts)
+   • प्रत्येक राज्य/UT के लिए
+   • 25 High Courts
 
-**3. जिला न्यायालय (District Court)**
-• जिला एवं सत्र न्यायाधीश
-• सिविल और आपराधिक मामले
+3. **जिला न्यायालय** (District Courts)
+   • जिला और सत्र न्यायाधीश
 
-**4. अधीनस्थ न्यायालय**
-• मजिस्ट्रेट कोर्ट
-• सिविल कोर्ट (मुंसिफ)'''
-            : '''**Indian Court System:**
+4. **अधीनस्थ न्यायालय** (Subordinate Courts)
+   • सिविल जज (Junior/Senior Division)
+   • मजिस्ट्रेट कोर्ट
 
-**1. Supreme Court**
-• Located in Delhi
-• Highest appellate court
-• Chief Justice + 33 other judges
+5. **विशेष न्यायालय**
+   • Family Courts, Consumer Courts, NCLT
+   • Fast Track Courts, Lok Adalat'''
+            : '''**Indian Court Hierarchy:**
 
-**2. High Court**
-• In each State/UT
-• 25 High Courts
-• Highest court in state
+1. **Supreme Court**
+   • Chief Justice + other Judges
+   • Final interpreter of Constitution
 
-**3. District Court**
-• District & Sessions Judge
-• Civil and Criminal cases
+2. **High Courts**
+   • One for each state/UT
+   • 25 High Courts
 
-**4. Subordinate Courts**
-• Magistrate Courts
-• Civil Courts (Munsif)''',
-        'keywords': ['courts', 'types', 'system', 'न्यायालय', 'प्रकार'],
-      },
-      {
-        'category': isHindi ? 'न्यायालय प्रणाली' : 'Court System',
-        'icon': '👨‍⚖️',
-        'question': isHindi
-            ? 'जज का काम क्या होता है?'
-            : 'What does a judge do?',
-        'answer': isHindi
-            ? '''**न्यायाधीश की भूमिका:**
+3. **District Courts**
+   • District & Sessions Judges
 
-**मुख्य कार्य:**
-• दोनों पक्षों की सुनवाई करना
-• साक्ष्यों का विश्लेषण करना
-• कानून के अनुसार निर्णय देना
-• न्याय सुनिश्चित करना
+4. **Subordinate Courts**
+   • Civil Judge (Junior/Senior Division)
+   • Magistrate Courts
 
-**गुण जो आवश्यक हैं:**
-✅ निष्पक्षता
-✅ धैर्य
-✅ तार्किक सोच
-✅ कानून का ज्ञान
-✅ नैतिक साहस
-
-**दैनिक कार्य:**
-• केस सुनवाई
-• आदेश लिखना
-• जमानत याचिकाएं
-• विचारण (Trial) आयोजित करना'''
-            : '''**Role of a Judge:**
-
-**Main Duties:**
-• Hearing both parties
-• Analyzing evidence
-• Delivering judgment per law
-• Ensuring justice
-
-**Qualities Required:**
-✅ Impartiality
-✅ Patience
-✅ Logical thinking
-✅ Knowledge of law
-✅ Moral courage
-
-**Daily Work:**
-• Case hearings
-• Writing orders
-• Bail petitions
-• Conducting trials''',
-        'keywords': ['role', 'work', 'duties', 'काम', 'भूमिका', 'judge'],
+5. **Special Courts**
+   • Family Courts, Consumer Courts, NCLT
+   • Fast Track Courts, Lok Adalat''',
+        'keywords': [
+          'court',
+          'types',
+          'hierarchy',
+          'न्यायालय',
+          'प्रकार',
+          'कोर्ट',
+        ],
       },
       // Preparation Tips
       {
         'category': isHindi ? 'तैयारी सुझाव' : 'Preparation Tips',
         'icon': '💡',
         'question': isHindi
-            ? 'न्यायिक सेवा की तैयारी कैसे करें?'
-            : 'How to prepare for Judicial Services exam?',
+            ? 'न्यायिक परीक्षा की तैयारी कैसे करें?'
+            : 'How to prepare for judicial exams?',
         'answer': isHindi
-            ? '''**PCS-J तैयारी रणनीति:**
+            ? '''**न्यायिक परीक्षा तैयारी गाइड:**
 
-**1. मुख्य विषय:**
-• संविधान (Constitution)
-• IPC & CrPC
-• CPC & Evidence Act
-• Transfer of Property Act
-• Contract Act
+**1. मूल विषय:**
+• भारतीय संविधान
+• CPC (सिविल प्रक्रिया संहिता)
+• CrPC (दंड प्रक्रिया संहिता)
+• IPC / भारतीय न्याय संहिता (BNS)
+• Evidence Act / भारतीय साक्ष्य अधिनियम (BSA)
 
-**2. तैयारी का तरीका:**
-• Bare Acts पढ़ें
-• Previous Year Papers हल करें
-• Judgment Writing अभ्यास करें
-• Current Legal Affairs पढ़ें
+**2. तैयारी रणनीति:**
+• Bare Acts का नियमित अध्ययन
+• पिछले वर्षों के प्रश्न पत्र हल करें
+• मॉक टेस्ट नियमित रूप से दें
+• उत्तर लेखन अभ्यास करें
 
-**3. समय सीमा:**
-• Prelims: 6-8 महीने
-• Mains: 4-6 महीने अतिरिक्त
-
-**सुझाव:** नियमित Mock Test दें'''
-            : '''**PCS-J Preparation Strategy:**
+**3. महत्वपूर्ण संसाधन:**
+• Bare Acts और कमेंट्री
+• SC/HC के प्रमुख निर्णय
+• कानूनी पत्रिकाएं
+• ऑनलाइन कोर्सेज'''
+            : '''**Judicial Exam Preparation Guide:**
 
 **1. Core Subjects:**
-• Constitution
-• IPC & CrPC
-• CPC & Evidence Act
-• Transfer of Property Act
-• Contract Act
+• Indian Constitution
+• CPC (Civil Procedure Code)
+• CrPC (Criminal Procedure Code)
+• IPC / Bharatiya Nyaya Sanhita (BNS)
+• Evidence Act / Bharatiya Sakshya Adhiniyam (BSA)
 
-**2. Preparation Method:**
-• Read Bare Acts
-• Solve Previous Year Papers
-• Practice Judgment Writing
-• Follow Current Legal Affairs
+**2. Preparation Strategy:**
+• Regular study of Bare Acts
+• Solve previous year question papers
+• Take mock tests regularly
+• Practice answer writing
 
-**3. Timeline:**
-• Prelims: 6-8 months
-• Mains: 4-6 months additional
-
-**Tip:** Take regular Mock Tests''',
+**3. Important Resources:**
+• Bare Acts and Commentaries
+• Landmark SC/HC Judgments
+• Legal journals
+• Online courses''',
         'keywords': [
           'prepare',
           'preparation',
           'tips',
-          'study',
+          'strategy',
           'तैयारी',
-          'पढ़ाई',
+          'सुझाव',
+          'रणनीति',
         ],
-      },
-      {
-        'category': isHindi ? 'तैयारी सुझाव' : 'Preparation Tips',
-        'icon': '📖',
-        'question': isHindi
-            ? 'कौन सी किताबें पढ़नी चाहिए?'
-            : 'Which books should I read?',
-        'answer': isHindi
-            ? '''**न्यायिक सेवा के लिए पुस्तकें:**
-
-**संविधान:**
-• D.D. Basu - Introduction to Constitution
-• M. Laxmikanth - Indian Polity
-
-**IPC & CrPC:**
-• K.D. Gaur - Indian Penal Code
-• Ratanlal & Dhirajlal
-
-**CPC & Evidence:**
-• C.K. Takwani - Civil Procedure
-• Batuk Lal - Law of Evidence
-
-**सामान्य:**
-• Bare Acts (अनिवार्य)
-• Previous Year Papers
-
-**नोट:** राज्य विशेष Local Laws भी पढ़ें'''
-            : '''**Books for Judicial Services:**
-
-**Constitution:**
-• D.D. Basu - Introduction to Constitution
-• M. Laxmikanth - Indian Polity
-
-**IPC & CrPC:**
-• K.D. Gaur - Indian Penal Code
-• Ratanlal & Dhirajlal
-
-**CPC & Evidence:**
-• C.K. Takwani - Civil Procedure
-• Batuk Lal - Law of Evidence
-
-**General:**
-• Bare Acts (Essential)
-• Previous Year Papers
-
-**Note:** Also read state-specific Local Laws''',
-        'keywords': ['books', 'read', 'study', 'किताब', 'पुस्तक', 'पढ़ना'],
       },
     ];
   }
 
-  List<String> _getQuickQuestions(bool isHindi) {
-    return isHindi
-        ? [
-            '12वीं के बाद जज कैसे बनें?',
-            'मेरे राज्य में कौन सी परीक्षा?',
-            'जज की सैलरी कितनी है?',
-            'CLAT क्या है?',
-            'उम्र सीमा क्या है?',
-            'तैयारी कैसे करें?',
-          ]
-        : [
-            'How to become a judge after 12th?',
-            'Which exam in my state?',
-            'What is a judge\'s salary?',
-            'What is CLAT?',
-            'What is the age limit?',
-            'How to prepare?',
-          ];
+  List<Map<String, dynamic>> _getQuickQuestions(bool isHindi) {
+    return [
+      {
+        'text': isHindi
+            ? '12वीं के बाद जज कैसे बनें?'
+            : 'How to become judge after 12th?',
+        'query': '12th',
+      },
+      {
+        'text': isHindi ? 'आयु सीमा क्या है?' : 'What is the age limit?',
+        'query': 'eligibility',
+      },
+      {
+        'text': isHindi ? 'वेतन कितनी है?' : 'What is the salary?',
+        'query': 'salary',
+      },
+      {
+        'text': isHindi ? 'कौन सी परीक्षा देनी होगी?' : 'Which exam to give?',
+        'query': 'exam',
+      },
+      {
+        'text': isHindi ? 'तैयारी कैसे करें?' : 'How to prepare?',
+        'query': 'prepare',
+      },
+      {'text': isHindi ? 'CLAT क्या है?' : 'What is CLAT?', 'query': 'CLAT'},
+    ];
   }
 
   @override
   Widget build(BuildContext context) {
     final localeProvider = context.watch<LocaleProvider>();
     final isHindi = localeProvider.locale.languageCode == 'hi';
-    final allFaqs = _getFaqs(isHindi);
-    final quickQuestions = _getQuickQuestions(isHindi);
 
-    // Group FAQs by category
-    final categories = <String, List<Map<String, dynamic>>>{};
-    for (final faq in allFaqs) {
-      final category = faq['category'] as String;
-      categories[category] ??= [];
-      categories[category]!.add(faq);
-    }
+    final displayFaqs = _searchQuery.isEmpty
+        ? _getFaqs(isHindi)
+        : _filteredFaqs;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isHindi ? 'सहायक' : 'Assistant'),
+        title: Text(isHindi ? 'न्यायिक सहायक' : 'Judicial Assistant'),
         backgroundColor: AppTheme.primaryColor,
-        foregroundColor: Colors.white,
       ),
       body: Column(
         children: [
-          // Search Bar
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppTheme.primaryColor,
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(24),
-                bottomRight: Radius.circular(24),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  isHindi ? 'आपका कोई सवाल है?' : 'Have a question?',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+          // Voice Banner
+          if (_speechAvailable)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppTheme.primaryColor.withAlpha(20),
+                    AppTheme.accentColor.withAlpha(20),
+                  ],
                 ),
-                const SizedBox(height: 12),
-
-                // Voice Input Banner (Prominent)
-                if (_speechAvailable)
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Colors.blue.shade50, Colors.purple.shade50],
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.blue.shade200),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: _isListening
-                                ? Colors.red.shade100
-                                : Colors.white,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            _isListening ? Icons.mic : Icons.mic_none,
-                            color: _isListening
-                                ? Colors.red
-                                : AppTheme.primaryColor,
-                            size: 24,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                isHindi
-                                    ? '🎤 वॉइस से पूछें'
-                                    : '🎤 Ask with Voice',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              Text(
-                                isHindi
-                                    ? 'माइक पर टैप करें और बोलें'
-                                    : 'Tap mic and speak your question',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.grey.shade700,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        ElevatedButton.icon(
-                          onPressed: () {
-                            if (_isListening) {
-                              _stopListening();
-                            } else {
-                              _startListening(isHindi);
-                            }
-                          },
-                          icon: Icon(
-                            _isListening ? Icons.stop : Icons.mic,
-                            size: 18,
-                          ),
-                          label: Text(
-                            _isListening
-                                ? (isHindi ? 'रोकें' : 'Stop')
-                                : (isHindi ? 'बोलें' : 'Speak'),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _isListening
-                                ? Colors.red
-                                : AppTheme.primaryColor,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ).animate().fadeIn().slideY(begin: -0.1, end: 0),
-
-                const SizedBox(height: 12),
-
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    _isListening ? Icons.mic : Icons.mic_none,
+                    color: _isListening ? Colors.red : AppTheme.primaryColor,
+                    size: 20,
                   ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _isListening
+                          ? (isHindi
+                                ? '🎙️ सुन रहा हूं... बोलें'
+                                : '🎙️ Listening... Speak now')
+                          : (isHindi
+                                ? '🎙️ माइक बटन दबाकर सवाल पूछें'
+                                : '🎙️ Tap mic button to ask a question'),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: _isListening
+                            ? Colors.red.shade700
+                            : AppTheme.textSecondary,
+                        fontWeight: _isListening
+                            ? FontWeight.w600
+                            : FontWeight.normal,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ).animate().fadeIn(),
+
+          // Search Bar
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Expanded(
                   child: TextField(
                     controller: _searchController,
                     onChanged: (value) => _onSearch(value, isHindi),
                     decoration: InputDecoration(
                       hintText: isHindi
-                          ? 'जैसे: "जज कैसे बनें?"'
-                          : 'e.g., "How to become a judge?"',
-                      prefixIcon: const Icon(Icons.search),
-                      suffixIcon: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (_speechAvailable)
-                            IconButton(
-                              icon: Icon(
-                                _isListening ? Icons.mic : Icons.mic_none,
-                                color: _isListening
-                                    ? Colors.red
-                                    : AppTheme.primaryColor,
-                              ),
-                              tooltip: isHindi ? 'वॉइस खोजें' : 'Voice Search',
-                              onPressed: () {
-                                if (_isListening) {
-                                  _stopListening();
-                                } else {
-                                  _startListening(isHindi);
-                                }
-                              },
-                            ),
-                          if (_searchQuery.isNotEmpty)
-                            IconButton(
+                          ? '🔍 अपना सवाल टाइप करें...'
+                          : '🔍 Type your question...',
+                      prefixIcon: const Icon(
+                        Icons.search,
+                        color: AppTheme.primaryColor,
+                      ),
+                      suffixIcon: _searchController.text.isNotEmpty
+                          ? IconButton(
                               icon: const Icon(Icons.clear),
                               onPressed: () {
                                 _searchController.clear();
                                 _onSearch('', isHindi);
                               },
-                            ),
-                        ],
+                            )
+                          : null,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
                       ),
-                      border: InputBorder.none,
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: AppTheme.primaryColor,
+                          width: 2,
+                        ),
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey.shade50,
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 14,
@@ -822,209 +690,298 @@ You can pursue LLB from any stream:
                     ),
                   ),
                 ),
-              ],
-            ),
-          ),
-
-          // Content
-          Expanded(
-            child: _searchQuery.isNotEmpty
-                ? _buildSearchResults(isHindi)
-                : _buildDefaultContent(categories, quickQuestions, isHindi),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSearchResults(bool isHindi) {
-    if (_filteredFaqs.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text('🔍', style: TextStyle(fontSize: 60)),
-            const SizedBox(height: 16),
-            Text(
-              isHindi ? 'कोई परिणाम नहीं मिला' : 'No results found',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              isHindi
-                  ? 'कृपया अलग शब्दों से खोजें'
-                  : 'Try searching with different words',
-              style: TextStyle(color: Colors.grey.shade600),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: _filteredFaqs.length,
-      itemBuilder: (context, index) {
-        return _buildFaqCard(_filteredFaqs[index], isHindi, index);
-      },
-    );
-  }
-
-  Widget _buildDefaultContent(
-    Map<String, List<Map<String, dynamic>>> categories,
-    List<String> quickQuestions,
-    bool isHindi,
-  ) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Quick Questions
-          Text(
-            isHindi ? 'सामान्य प्रश्न' : 'Common Questions',
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ).animate().fadeIn(),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: quickQuestions.asMap().entries.map((entry) {
-              return ActionChip(
-                    label: Text(
-                      entry.value,
-                      style: const TextStyle(fontSize: 12),
+                if (_speechAvailable) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: _isListening ? Colors.red : AppTheme.primaryColor,
                     ),
-                    onPressed: () {
-                      _searchController.text = entry.value;
-                      _onSearch(entry.value, isHindi);
-                    },
-                    backgroundColor: AppTheme.primaryColor.withAlpha(25),
-                  )
-                  .animate(delay: (100 * entry.key).ms)
-                  .fadeIn()
-                  .slideX(begin: 0.1);
-            }).toList(),
-          ),
-          const SizedBox(height: 24),
-
-          // All FAQs by category
-          ...categories.entries.map((entry) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  entry.key,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryColor,
+                    child: IconButton(
+                      icon: Icon(
+                        _isListening ? Icons.stop : Icons.mic,
+                        color: Colors.white,
+                      ),
+                      onPressed: _isListening
+                          ? _stopListening
+                          : () => _startListening(isHindi),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                ...entry.value.asMap().entries.map((faqEntry) {
-                  return _buildFaqCard(faqEntry.value, isHindi, faqEntry.key);
-                }),
-                const SizedBox(height: 16),
+                ],
               ],
-            );
-          }),
+            ),
+          ).animate().fadeIn().slideY(begin: -0.1, end: 0),
+
+          // Quick Questions
+          if (_searchQuery.isEmpty)
+            SizedBox(
+              height: 42,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                children: _getQuickQuestions(isHindi).map((q) {
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ActionChip(
+                      label: Text(
+                        q['text'] as String,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppTheme.primaryColor,
+                        ),
+                      ),
+                      backgroundColor: AppTheme.primaryColor.withAlpha(20),
+                      side: BorderSide(
+                        color: AppTheme.primaryColor.withAlpha(50),
+                      ),
+                      onPressed: () {
+                        _searchController.text = q['text'] as String;
+                        _onSearch(q['query'] as String, isHindi);
+                      },
+                    ),
+                  );
+                }).toList(),
+              ),
+            ).animate(delay: 100.ms).fadeIn(),
+
+          const SizedBox(height: 8),
+
+          // FAQ Results
+          Expanded(
+            child: displayFaqs.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text('⚖️', style: TextStyle(fontSize: 64)),
+                        const SizedBox(height: 16),
+                        Text(
+                          _searchQuery.isNotEmpty
+                              ? (isHindi
+                                    ? 'कोई परिणाम नहीं मिला'
+                                    : 'No results found')
+                              : (isHindi
+                                    ? 'अपना सवाल पूछें या खोजें'
+                                    : 'Ask or search your question'),
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: AppTheme.textSecondary,
+                          ),
+                        ),
+                        if (_searchQuery.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            isHindi
+                                ? 'अलग शब्दों से खोजने का प्रयास करें'
+                                : 'Try searching with different words',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: AppTheme.textSecondary.withAlpha(150),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: displayFaqs.length,
+                    itemBuilder: (context, index) {
+                      final faq = displayFaqs[index];
+                      return _FaqCard(
+                        faq: faq,
+                        isHindi: isHindi,
+                        delay: index * 50,
+                      );
+                    },
+                  ),
+          ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildFaqCard(Map<String, dynamic> faq, bool isHindi, int index) {
+class _FaqCard extends StatefulWidget {
+  final Map<String, dynamic> faq;
+  final bool isHindi;
+  final int delay;
+
+  const _FaqCard({required this.faq, required this.isHindi, this.delay = 0});
+
+  @override
+  State<_FaqCard> createState() => _FaqCardState();
+}
+
+class _FaqCardState extends State<_FaqCard> {
+  bool _isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final faq = widget.faq;
+
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: ExpansionTile(
-        leading: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: AppTheme.primaryColor.withAlpha(25),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Center(
-            child: Text(
-              faq['icon'] as String,
-              style: const TextStyle(fontSize: 20),
+          margin: const EdgeInsets.only(bottom: 12),
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(
+              color: _isExpanded
+                  ? AppTheme.primaryColor.withAlpha(100)
+                  : Colors.grey.shade200,
             ),
           ),
-        ),
-        title: Text(
-          faq['question'] as String,
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-        ),
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: Container(
-              width: double.infinity,
+          child: InkWell(
+            onTap: () => setState(() => _isExpanded = !_isExpanded),
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade50,
-                borderRadius: BorderRadius.circular(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        faq['icon'] as String? ?? '❓',
+                        style: const TextStyle(fontSize: 24),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              faq['category'] as String? ?? '',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: AppTheme.primaryColor,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              faq['question'] as String? ?? '',
+                              style: Theme.of(context).textTheme.titleSmall
+                                  ?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(
+                        _isExpanded
+                            ? Icons.keyboard_arrow_up
+                            : Icons.keyboard_arrow_down,
+                        color: AppTheme.textSecondary,
+                      ),
+                    ],
+                  ),
+                  if (_isExpanded) ...[
+                    const Divider(height: 24),
+                    _buildRichAnswer(faq['answer'] as String? ?? ''),
+                  ],
+                ],
               ),
-              child: _buildRichAnswer(faq['answer'] as String),
             ),
           ),
-        ],
-      ),
-    ).animate(delay: (50 * index).ms).fadeIn().slideY(begin: 0.05);
+        )
+        .animate(delay: Duration(milliseconds: widget.delay))
+        .fadeIn()
+        .slideY(begin: 0.05, end: 0);
   }
 
   Widget _buildRichAnswer(String answer) {
-    final spans = <TextSpan>[];
-    final regex = RegExp(r'\*\*(.*?)\*\*');
-    int lastIndex = 0;
+    final lines = answer.split('\n');
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: lines.map((line) {
+        final trimmed = line.trim();
+        if (trimmed.isEmpty) return const SizedBox(height: 8);
 
-    for (final match in regex.allMatches(answer)) {
-      // Add normal text before the match
-      if (match.start > lastIndex) {
-        spans.add(
-          TextSpan(
-            text: answer.substring(lastIndex, match.start),
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey.shade800,
-              height: 1.6,
+        // Bold text: **text**
+        if (trimmed.contains('**')) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: _buildBoldText(trimmed),
+          );
+        }
+
+        // Bullet points
+        if (trimmed.startsWith('•') || trimmed.startsWith('✅')) {
+          return Padding(
+            padding: const EdgeInsets.only(left: 8, bottom: 4),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  trimmed.startsWith('✅') ? '✅ ' : '• ',
+                  style: TextStyle(color: AppTheme.primaryColor, fontSize: 14),
+                ),
+                Expanded(
+                  child: _buildBoldText(
+                    trimmed.startsWith('✅')
+                        ? trimmed.substring(2).trim()
+                        : trimmed.substring(1).trim(),
+                  ),
+                ),
+              ],
             ),
+          );
+        }
+
+        // Numbered items
+        if (RegExp(r'^\d+\.').hasMatch(trimmed)) {
+          return Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 4),
+            child: _buildBoldText(trimmed),
+          );
+        }
+
+        // Arrow/hierarchy lines
+        if (trimmed.contains('↓') || trimmed.contains('→')) {
+          return Padding(
+            padding: const EdgeInsets.only(left: 16, bottom: 2),
+            child: Text(
+              trimmed,
+              style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+            ),
+          );
+        }
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 4),
+          child: Text(
+            trimmed,
+            style: const TextStyle(fontSize: 14, height: 1.5),
           ),
         );
-      }
+      }).toList(),
+    );
+  }
 
-      // Add bold text
-      spans.add(
-        TextSpan(
-          text: match.group(1),
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey.shade900,
-            fontWeight: FontWeight.bold,
-            height: 1.6,
-          ),
-        ),
-      );
-
-      lastIndex = match.end;
+  Widget _buildBoldText(String text) {
+    final parts = text.split('**');
+    if (parts.length <= 1) {
+      return Text(text, style: const TextStyle(fontSize: 14, height: 1.5));
     }
 
-    // Add remaining text
-    if (lastIndex < answer.length) {
-      spans.add(
-        TextSpan(
-          text: answer.substring(lastIndex),
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey.shade800,
-            height: 1.6,
-          ),
+    return RichText(
+      text: TextSpan(
+        style: TextStyle(
+          fontSize: 14,
+          height: 1.5,
+          color: AppTheme.textPrimary,
         ),
-      );
-    }
-
-    return RichText(text: TextSpan(children: spans));
+        children: parts.asMap().entries.map((entry) {
+          final isBold = entry.key % 2 == 1;
+          return TextSpan(
+            text: entry.value,
+            style: TextStyle(
+              fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+            ),
+          );
+        }).toList(),
+      ),
+    );
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../l10n/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../config/app_theme.dart';
 import '../../providers/user_provider.dart';
@@ -76,10 +77,7 @@ class RoadmapScreen extends StatelessWidget {
                         const SizedBox(height: 16),
                         Row(
                           children: [
-                            _InfoChip(
-                              icon: '📍',
-                              label: userProvider.user?.state ?? '',
-                            ),
+                            _InfoChip(icon: '📍', label: roadmap.state),
                             const SizedBox(width: 12),
                             _InfoChip(icon: '⏱️', label: roadmap.totalDuration),
                           ],
@@ -131,91 +129,190 @@ class RoadmapScreen extends StatelessWidget {
 
                   // Eligibility Criteria (Verifiable)
                   if (roadmap.eligibilityCriteria != null) ...[
-                    Text(
-                      isHindi
-                          ? 'पात्रता मानदंड (सत्यापित)'
-                          : 'Eligibility Criteria (Verified)',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ).animate(delay: 170.ms).fadeIn(),
+                    Builder(
+                      builder: (context) {
+                        final criteria = roadmap.eligibilityCriteria!;
+                        final isVerified =
+                            criteria.verificationLevel ==
+                            VerificationLevel.verified;
+                        final statusColor = isVerified
+                            ? Colors.green
+                            : Colors.orange.shade800;
+                        final cardColor = isVerified
+                            ? Colors.blue.shade50
+                            : Colors.orange.shade50;
+                        final cardBorder = isVerified
+                            ? Colors.blue.shade200
+                            : Colors.orange.shade200;
 
-                    const SizedBox(height: 12),
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              isHindi
+                                  ? 'पात्रता स्नैपशॉट (नियम + अधिसूचना जांच)'
+                                  : 'Eligibility Snapshot (Rules + Notification Check)',
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.bold),
+                            ).animate(delay: 170.ms).fadeIn(),
+                            const SizedBox(height: 12),
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: cardColor,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: cardBorder),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _EligibilityRow(
+                                    icon: 'A',
+                                    label: isHindi ? 'आयु सीमा' : 'Age Limit',
+                                    value: _formatAge(criteria, isHindi),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  _EligibilityRow(
+                                    icon: 'T',
+                                    label: isHindi
+                                        ? 'अधिकतम प्रयास'
+                                        : 'Max Attempts',
+                                    value: _formatAttempts(criteria, isHindi),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  _EligibilityRow(
+                                    icon: 'P',
+                                    label: isHindi
+                                        ? 'अभ्यास आवश्यकता'
+                                        : 'Practice Requirement',
+                                    value: criteria.practiceRequirement,
+                                    isMultiline: true,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  _EligibilityRow(
+                                    icon: 'L',
+                                    label: isHindi
+                                        ? 'भाषा आवश्यकताएं'
+                                        : 'Language Requirements',
+                                    value: criteria.languageRequirements.join(
+                                      ', ',
+                                    ),
+                                    isMultiline: true,
+                                  ),
+                                  const Divider(height: 20),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        isVerified
+                                            ? Icons.verified
+                                            : Icons.warning_amber,
+                                        size: 16,
+                                        color: statusColor,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Expanded(
+                                        child: Text(
+                                          '${isHindi ? 'स्रोत' : 'Source'}: ${criteria.sourceLabel}',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: statusColor,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '${isHindi ? 'डेटा स्थिति' : 'Data Status'}: ${isVerified ? (isHindi ? 'सत्यापित' : 'Verified') : (isHindi ? 'सलाहकार' : 'Advisory')}',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: statusColor,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '${isHindi ? 'अंतिम सत्यापन' : 'Last Verified'}: ${criteria.lastVerified}',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: Colors.grey.shade700,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  GestureDetector(
+                                    onTap: () async {
+                                      final uri = Uri.parse(criteria.sourceUrl);
+                                      if (await canLaunchUrl(uri)) {
+                                        await launchUrl(
+                                          uri,
+                                          mode: LaunchMode.externalApplication,
+                                        );
+                                      }
+                                    },
+                                    child: Text(
+                                      criteria.sourceUrl,
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: Colors.blue.shade700,
+                                        decoration: TextDecoration.underline,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    criteria.verificationNote,
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: Colors.grey.shade700,
+                                      height: 1.3,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ).animate(delay: 180.ms).fadeIn().slideX(begin: -0.1, end: 0),
 
+                            const SizedBox(height: 28),
+                          ],
+                        );
+                      },
+                    ),
+                  ],
+                  if (roadmap.eligibilityNotes.trim().isNotEmpty) ...[
                     Container(
-                      padding: const EdgeInsets.all(16),
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: Colors.blue.shade50,
+                        color: Colors.amber.shade50,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.blue.shade200),
+                        border: Border.all(color: Colors.amber.shade200),
                       ),
-                      child: Column(
+                      child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _EligibilityRow(
-                            icon: '👤',
-                            label: isHindi ? 'आयु सीमा' : 'Age Limit',
-                            value:
-                                '${roadmap.eligibilityCriteria!.minAge}-${roadmap.eligibilityCriteria!.maxAge} years',
+                          const Padding(
+                            padding: EdgeInsets.only(top: 2),
+                            child: Icon(
+                              Icons.info_outline,
+                              size: 18,
+                              color: Colors.brown,
+                            ),
                           ),
-                          const SizedBox(height: 8),
-                          _EligibilityRow(
-                            icon: '🔄',
-                            label: isHindi ? 'अधिकतम प्रयास' : 'Max Attempts',
-                            value: roadmap.eligibilityCriteria!.maxAttempts == 0
-                                ? (isHindi ? 'कोई सीमा नहीं' : 'No Limit')
-                                : '${roadmap.eligibilityCriteria!.maxAttempts}',
-                          ),
-                          const SizedBox(height: 8),
-                          _EligibilityRow(
-                            icon: '🗣️',
-                            label: isHindi
-                                ? 'भाषा आवश्यकताएं'
-                                : 'Language Requirements',
-                            value: roadmap
-                                .eligibilityCriteria!
-                                .languageRequirements
-                                .join(', '),
-                            isMultiline: true,
-                          ),
-                          const Divider(height: 20),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.verified,
-                                size: 16,
-                                color: Colors.green,
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              roadmap.eligibilityNotes,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                height: 1.4,
+                                color: Colors.brown,
                               ),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text(
-                                  isHindi
-                                      ? 'स्रोत: ${roadmap.eligibilityCriteria!.state} उच्च न्यायालय'
-                                      : 'Source: ${roadmap.eligibilityCriteria!.state} High Court',
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.green,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            isHindi
-                                ? 'अंतिम सत्यापन: ${roadmap.eligibilityCriteria!.lastVerified}'
-                                : 'Last Verified: ${roadmap.eligibilityCriteria!.lastVerified}',
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: Colors.grey.shade700,
                             ),
                           ),
                         ],
                       ),
-                    ).animate(delay: 180.ms).fadeIn().slideX(begin: -0.1, end: 0),
-
-                    const SizedBox(height: 28),
+                    ).animate(delay: 190.ms).fadeIn(),
+                    const SizedBox(height: 24),
                   ],
 
                   // Timeline
@@ -301,6 +398,34 @@ class RoadmapScreen extends StatelessWidget {
               ),
             ),
     );
+  }
+
+  String _formatAge(StateEligibilityCriteria criteria, bool isHindi) {
+    if (criteria.minAge != null && criteria.maxAge != null) {
+      return isHindi
+          ? '${criteria.minAge}-${criteria.maxAge} वर्ष'
+          : '${criteria.minAge}-${criteria.maxAge} years';
+    }
+    if (criteria.maxAge != null) {
+      return isHindi
+          ? '${criteria.maxAge} वर्ष तक'
+          : 'Up to ${criteria.maxAge} years';
+    }
+    return isHindi
+        ? 'नवीनतम आधिकारिक अधिसूचना देखें'
+        : 'Check latest official notification';
+  }
+
+  String _formatAttempts(StateEligibilityCriteria criteria, bool isHindi) {
+    if (criteria.maxAttempts == null) {
+      return isHindi
+          ? 'नवीनतम आधिकारिक अधिसूचना देखें'
+          : 'Check latest official notification';
+    }
+    if (criteria.maxAttempts == 0) {
+      return isHindi ? 'कोई स्पष्ट सीमा नहीं' : 'No explicit limit';
+    }
+    return '${criteria.maxAttempts}';
   }
 }
 
@@ -407,7 +532,7 @@ class _TimelineStep extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          step.title,
+                          step.getTitle(isHindi ? 'hi' : 'en'),
                           style: Theme.of(context).textTheme.titleSmall
                               ?.copyWith(fontWeight: FontWeight.bold),
                         ),
@@ -434,38 +559,42 @@ class _TimelineStep extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    step.description,
+                    step.getDescription(isHindi ? 'hi' : 'en'),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppTheme.textSecondary,
                     ),
                   ),
                   if (step.details.isNotEmpty) ...[
                     const SizedBox(height: 12),
-                    ...step.details.map(
-                      (detail) => Padding(
-                        padding: const EdgeInsets.only(bottom: 6),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              '•',
-                              style: TextStyle(color: AppTheme.primaryColor),
+                    ...step
+                        .getLocalizedDetails(isHindi ? 'hi' : 'en')
+                        .map(
+                          (detail) => Padding(
+                            padding: const EdgeInsets.only(bottom: 6),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  '•',
+                                  style: TextStyle(
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    detail,
+                                    style: Theme.of(context).textTheme.bodySmall
+                                        ?.copyWith(
+                                          color: AppTheme.textSecondary,
+                                          height: 1.4,
+                                        ),
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                detail,
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(
-                                      color: AppTheme.textSecondary,
-                                      height: 1.4,
-                                    ),
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
-                      ),
-                    ),
                   ],
                 ],
               ),

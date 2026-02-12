@@ -4,6 +4,7 @@ import '../../l10n/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../config/app_theme.dart';
+import '../../models/user_model.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/locale_provider.dart';
 
@@ -27,13 +28,14 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
 
   Future<void> _loadLeaderboard() async {
     setState(() => _isLoading = true);
+    final userProvider = context.read<UserProvider>();
 
     // Local algorithmic ranking (PS 3 requirement: no cloud infrastructure)
     await Future.delayed(const Duration(milliseconds: 300));
     _leaderboardData = _getAlgorithmicRankings();
 
     // Calculate local position using ranking algorithm
-    final userScore = context.read<UserProvider>().user?.totalScore ?? 0;
+    final userScore = userProvider.user?.totalScore ?? 0;
     _userPosition = _calculateLocalPosition(userScore);
 
     if (mounted) {
@@ -49,61 +51,51 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         'display_name': 'Aditya Sharma',
         'total_score': 485,
         'state': 'UP',
-        'rank': 'District Judge',
       },
       {
         'display_name': 'Priya Singh',
         'total_score': 420,
         'state': 'MP',
-        'rank': 'Senior Magistrate',
       },
       {
         'display_name': 'Rahul Verma',
         'total_score': 380,
         'state': 'MH',
-        'rank': 'Senior Magistrate',
       },
       {
         'display_name': 'Ankita Patel',
         'total_score': 325,
         'state': 'GJ',
-        'rank': 'Senior Magistrate',
       },
       {
         'display_name': 'Vikas Kumar',
         'total_score': 290,
         'state': 'BR',
-        'rank': 'Junior Judge',
       },
       {
         'display_name': 'Neha Gupta',
         'total_score': 245,
         'state': 'RJ',
-        'rank': 'Junior Judge',
       },
       {
         'display_name': 'Amit Yadav',
         'total_score': 210,
         'state': 'UP',
-        'rank': 'Junior Judge',
       },
       {
         'display_name': 'Pooja Sharma',
         'total_score': 175,
         'state': 'DL',
-        'rank': 'Junior Judge',
       },
       {
         'display_name': 'Suresh Mishra',
         'total_score': 140,
         'state': 'MH',
-        'rank': 'Trainee Magistrate',
       },
       {
         'display_name': 'Kavita Jain',
         'total_score': 95,
         'state': 'KA',
-        'rank': 'Trainee Magistrate',
       },
     ];
   }
@@ -225,12 +217,13 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                       itemCount: _leaderboardData.length,
                       itemBuilder: (context, index) {
                         final entry = _leaderboardData[index];
+                        final score = entry['total_score'] as int? ?? 0;
                         return _LeaderboardItem(
                               rank: index + 1,
                               name: entry['display_name'] as String? ?? 'User',
-                              score: entry['total_score'] as int? ?? 0,
+                              score: score,
                               state: entry['state'] as String? ?? '',
-                              title: entry['rank'] as String? ?? 'Trainee',
+                              title: UserModel.getRankTitle(score),
                               isHindi: isHindi,
                             )
                             .animate(delay: Duration(milliseconds: 50 * index))

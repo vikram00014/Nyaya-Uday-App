@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   testWidgets('App starts correctly', (WidgetTester tester) async {
-    // Placeholder test - actual tests require Supabase mocking
+    // Placeholder smoke test.
     expect(true, true);
   });
 }

@@ -75,9 +75,10 @@ class UserModel {
 
   // Get rank title based on score
   static String getRankTitle(int score) {
-    if (score >= 500) return 'District Judge';
-    if (score >= 300) return 'Senior Magistrate';
-    if (score >= 150) return 'Junior Judge';
+    if (score >= 500) return 'High Court Judge';
+    if (score >= 350) return 'District Judge';
+    if (score >= 200) return 'Senior Magistrate';
+    if (score >= 100) return 'Junior Judge';
     if (score >= 50) return 'Trainee Magistrate';
     return 'Trainee';
   }

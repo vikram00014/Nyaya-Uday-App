@@ -26,6 +26,9 @@ dependencies:
   # Voice Input (PS 3 requirement: voice-friendly)
   speech_to_text: ^7.0.0
   
+  # URL Launcher (clickable links)
+  url_launcher: ^6.2.5
+  
   # Internationalization
   intl: any
 

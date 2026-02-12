@@ -117,6 +117,20 @@ class CaseScenario {
         return '📝';
       case 'family':
         return '👨‍👩‍👧';
+      case 'consumer':
+        return '🛍️';
+      case 'workplace':
+        return '🏢';
+      case 'medical':
+        return '🏥';
+      case 'financial':
+        return '💳';
+      case 'accident':
+        return '🚗';
+      case 'cyber':
+        return '💻';
+      case 'agriculture':
+        return '🌾';
       default:
         return '⚖️';
     }

@@ -17,23 +17,60 @@ class LegalModulesScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isHindi ? 'कानूनी साक्षरता' : 'Legal Literacy'),
+        title: Text(isHindi ? 'Legal Literacy' : 'Legal Literacy'),
         backgroundColor: AppTheme.primaryColor,
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: modules.length,
-        itemBuilder: (context, index) {
-          final module = modules[index];
-          return _ModuleCard(
-            icon: module['icon']!,
-            title: module['title']!,
-            duration: module['duration']!,
-            content: module['content']!,
-            category: module['category']!,
-            isHindi: isHindi,
-          ).animate(delay: Duration(milliseconds: 80 * index)).fadeIn().slideY(begin: 0.1, end: 0);
-        },
+      body: Column(
+        children: [
+          Container(
+            margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.amber.shade50,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.amber.shade200),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.info_outline, size: 18, color: Colors.brown),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    isHindi
+                        ? 'This is educational guidance. Always verify eligibility and exam rules from the latest official notification.'
+                        : 'This is educational guidance. Always verify eligibility and exam rules from the latest official notification.',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Colors.brown,
+                      height: 1.3,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: modules.length,
+              itemBuilder: (context, index) {
+                final module = modules[index];
+                return _ModuleCard(
+                      icon: module['icon']!,
+                      title: module['title']!,
+                      duration: module['duration']!,
+                      content: module['content']!,
+                      category: module['category']!,
+                      isHindi: isHindi,
+                    )
+                    .animate(delay: Duration(milliseconds: 80 * index))
+                    .fadeIn()
+                    .slideY(begin: 0.1, end: 0);
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -124,7 +161,9 @@ class LegalModulesScreen extends StatelessWidget {
       {
         'icon': '🏛️',
         'category': isHindi ? '🔰 मूल बातें' : '🔰 Basics',
-        'title': isHindi ? 'भारत में अदालतों के प्रकार' : 'Types of Courts in India',
+        'title': isHindi
+            ? 'भारत में अदालतों के प्रकार'
+            : 'Types of Courts in India',
         'duration': '90 sec',
         'content': isHindi
             ? '''भारत में तीन स्तरीय न्यायालय प्रणाली है:
@@ -624,7 +663,9 @@ Start from Class 12 → Judge in 8-10 years!''',
       {
         'icon': '📖',
         'category': isHindi ? '💼 आपका करियर' : '💼 Your Career',
-        'title': isHindi ? 'परीक्षा में क्या आता है?' : 'What Comes in the Exam?',
+        'title': isHindi
+            ? 'परीक्षा में क्या आता है?'
+            : 'What Comes in the Exam?',
         'duration': '90 sec',
         'content': isHindi
             ? '''न्यायिक सेवा परीक्षा का पैटर्न:
@@ -807,7 +848,9 @@ Check your state's requirements!''',
       {
         'icon': '🆘',
         'category': isHindi ? '🔍 व्यावहारिक ज्ञान' : '🔍 Practical Knowledge',
-        'title': isHindi ? 'कानूनी सहायता कहाँ मिले?' : 'Where to Get Legal Help?',
+        'title': isHindi
+            ? 'कानूनी सहायता कहाँ मिले?'
+            : 'Where to Get Legal Help?',
         'duration': '90 sec',
         'content': isHindi
             ? '''भारत में मुफ्त कानूनी सहायता उपलब्ध है:
@@ -897,9 +940,7 @@ class _ModuleCardState extends State<_ModuleCard> {
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: () {
           setState(() {
@@ -939,7 +980,10 @@ class _ModuleCardState extends State<_ModuleCard> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Center(
-                      child: Text(widget.icon, style: const TextStyle(fontSize: 26)),
+                      child: Text(
+                        widget.icon,
+                        style: const TextStyle(fontSize: 26),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -949,9 +993,8 @@ class _ModuleCardState extends State<_ModuleCard> {
                       children: [
                         Text(
                           widget.title,
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 4),
                         Container(
@@ -992,9 +1035,9 @@ class _ModuleCardState extends State<_ModuleCard> {
                   ),
                   child: Text(
                     widget.content,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          height: 1.6,
-                        ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(height: 1.6),
                   ),
                 ),
               ],

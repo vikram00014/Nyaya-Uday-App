@@ -7,6 +7,10 @@ class UserProvider extends ChangeNotifier {
   UserModel? _user;
   bool _isLoading = false;
   bool _isOnboarded = false;
+  static const Map<String, String> _legacyBadgeAliases = {
+    'ten_cases': 'dedicated',
+    'century': 'centurion',
+  };
 
   // User profile fields (local only - no cloud auth)
   String? _displayName;
@@ -27,14 +31,26 @@ class UserProvider extends ChangeNotifier {
     _displayName = prefs.getString('user_display_name');
 
     if (_isOnboarded) {
+      final savedScore = prefs.getInt('total_score') ?? 0;
+      final savedBadges = prefs.getStringList('badges') ?? [];
+      final normalizedBadges = _normalizeBadges(savedBadges);
+      final normalizedRank = UserModel.getRankTitle(savedScore);
+
+      if (!_listEquals(savedBadges, normalizedBadges)) {
+        await prefs.setStringList('badges', normalizedBadges);
+      }
+      if ((prefs.getString('rank') ?? '') != normalizedRank) {
+        await prefs.setString('rank', normalizedRank);
+      }
+
       _user = UserModel(
         state: prefs.getString('user_state') ?? '',
         educationLevel: prefs.getString('user_education') ?? '',
         preferredLanguage: prefs.getString('preferred_language') ?? 'en',
-        totalScore: prefs.getInt('total_score') ?? 0,
+        totalScore: savedScore,
         casesCompleted: prefs.getInt('cases_completed') ?? 0,
-        badges: prefs.getStringList('badges') ?? [],
-        rank: prefs.getString('rank') ?? 'Trainee',
+        badges: normalizedBadges,
+        rank: normalizedRank,
       );
     }
 
@@ -91,7 +107,7 @@ class UserProvider extends ChangeNotifier {
     final newRank = UserModel.getRankTitle(newScore);
 
     // Check for new badges
-    List<String> newBadges = List.from(_user!.badges);
+    List<String> newBadges = _normalizeBadges(_user!.badges);
     if (newCasesCompleted == 1 && !newBadges.contains('first_case')) {
       newBadges.add('first_case');
     }
@@ -122,6 +138,7 @@ class UserProvider extends ChangeNotifier {
     if (additionalScore >= 12 && !newBadges.contains('fair_judge')) {
       newBadges.add('fair_judge');
     }
+    newBadges = _normalizeBadges(newBadges);
 
     _user = _user!.copyWith(
       totalScore: newScore,
@@ -231,4 +248,24 @@ class UserProvider extends ChangeNotifier {
       'descriptionHi': 'एक केस में 12+ अंक प्राप्त किए',
     },
   };
+
+  List<String> _normalizeBadges(List<String> badges) {
+    final normalized = <String>{};
+    for (final badge in badges) {
+      final mapped = _legacyBadgeAliases[badge] ?? badge;
+      if (badgeInfo.containsKey(mapped)) {
+        normalized.add(mapped);
+      }
+    }
+    final list = normalized.toList()..sort();
+    return list;
+  }
+
+  bool _listEquals(List<String> a, List<String> b) {
+    if (a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
 }

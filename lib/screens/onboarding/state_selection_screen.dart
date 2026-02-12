@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../l10n/generated/app_localizations.dart';
 
 import '../../config/app_theme.dart';
+import '../../models/state_catalog.dart';
 import 'education_level_screen.dart';
 
 class StateSelectionScreen extends StatefulWidget {
@@ -17,37 +18,14 @@ class _StateSelectionScreenState extends State<StateSelectionScreen> {
   final TextEditingController _searchController = TextEditingController();
   List<Map<String, String>> _filteredStates = [];
 
-  final List<Map<String, String>> _indianStates = [
-    {'code': 'AP', 'name': 'Andhra Pradesh', 'nameHi': 'आंध्र प्रदेश'},
-    {'code': 'AR', 'name': 'Arunachal Pradesh', 'nameHi': 'अरुणाचल प्रदेश'},
-    {'code': 'AS', 'name': 'Assam', 'nameHi': 'असम'},
-    {'code': 'BR', 'name': 'Bihar', 'nameHi': 'बिहार'},
-    {'code': 'CG', 'name': 'Chhattisgarh', 'nameHi': 'छत्तीसगढ़'},
-    {'code': 'GA', 'name': 'Goa', 'nameHi': 'गोवा'},
-    {'code': 'GJ', 'name': 'Gujarat', 'nameHi': 'गुजरात'},
-    {'code': 'HR', 'name': 'Haryana', 'nameHi': 'हरियाणा'},
-    {'code': 'HP', 'name': 'Himachal Pradesh', 'nameHi': 'हिमाचल प्रदेश'},
-    {'code': 'JH', 'name': 'Jharkhand', 'nameHi': 'झारखंड'},
-    {'code': 'KA', 'name': 'Karnataka', 'nameHi': 'कर्नाटक'},
-    {'code': 'KL', 'name': 'Kerala', 'nameHi': 'केरल'},
-    {'code': 'MP', 'name': 'Madhya Pradesh', 'nameHi': 'मध्य प्रदेश'},
-    {'code': 'MH', 'name': 'Maharashtra', 'nameHi': 'महाराष्ट्र'},
-    {'code': 'MN', 'name': 'Manipur', 'nameHi': 'मणिपुर'},
-    {'code': 'ML', 'name': 'Meghalaya', 'nameHi': 'मेघालय'},
-    {'code': 'MZ', 'name': 'Mizoram', 'nameHi': 'मिजोरम'},
-    {'code': 'NL', 'name': 'Nagaland', 'nameHi': 'नागालैंड'},
-    {'code': 'OD', 'name': 'Odisha', 'nameHi': 'ओडिशा'},
-    {'code': 'PB', 'name': 'Punjab', 'nameHi': 'पंजाब'},
-    {'code': 'RJ', 'name': 'Rajasthan', 'nameHi': 'राजस्थान'},
-    {'code': 'SK', 'name': 'Sikkim', 'nameHi': 'सिक्किम'},
-    {'code': 'TN', 'name': 'Tamil Nadu', 'nameHi': 'तमिलनाडु'},
-    {'code': 'TG', 'name': 'Telangana', 'nameHi': 'तेलंगाना'},
-    {'code': 'TR', 'name': 'Tripura', 'nameHi': 'त्रिपुरा'},
-    {'code': 'UP', 'name': 'Uttar Pradesh', 'nameHi': 'उत्तर प्रदेश'},
-    {'code': 'UK', 'name': 'Uttarakhand', 'nameHi': 'उत्तराखंड'},
-    {'code': 'WB', 'name': 'West Bengal', 'nameHi': 'पश्चिम बंगाल'},
-    {'code': 'DL', 'name': 'Delhi', 'nameHi': 'दिल्ली'},
-  ];
+  final List<Map<String, String>> _indianStates = StateCatalog.all
+      .map((state) => {
+            'code': state.code,
+            'name': state.name,
+            'nameHi': state.nameHi,
+          })
+      .toList()
+    ..sort((a, b) => a['name']!.compareTo(b['name']!));
 
   @override
   void initState() {

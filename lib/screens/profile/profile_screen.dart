@@ -4,6 +4,7 @@ import '../../l10n/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../config/app_theme.dart';
+import '../../models/state_catalog.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/locale_provider.dart';
 import 'achievements_screen.dart';
@@ -110,7 +111,7 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '📍 ${user?.state ?? 'India'}',
+                    '📍 ${user?.state != null && user!.state.isNotEmpty ? StateCatalog.displayName(user.state) : 'India'}',
                     style: TextStyle(color: Colors.white.withAlpha(200)),
                   ),
                 ],

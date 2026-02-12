@@ -1,6 +1,9 @@
 # Miscellaneous
 *.class
 *.log
+build_log.txt
+error_log.txt
+*.bak_encoding_fix
 *.pyc
 *.swp
 .DS_Store
@@ -43,3 +46,10 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# ── Internal docs (not for push) ──
+/docs/
+
+# ── Release APKs (DO push — for evaluators) ──
+# The /release/ folder is NOT ignored; APKs there will be pushed.
+!/release/

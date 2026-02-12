@@ -1,14 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../l10n/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../config/app_theme.dart';
-import '../../providers/user_provider.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../../providers/locale_provider.dart';
+import '../../providers/user_provider.dart';
 
 class AchievementsScreen extends StatelessWidget {
   const AchievementsScreen({super.key});
+
+  static const List<String> _badgeOrder = [
+    'first_case',
+    'quick_learner',
+    'five_cases',
+    'dedicated',
+    'expert',
+    'rising_star',
+    'centurion',
+    'judicial_master',
+    'fair_judge',
+    'perfect_judgment',
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -16,59 +29,8 @@ class AchievementsScreen extends StatelessWidget {
     final userProvider = context.watch<UserProvider>();
     final localeProvider = context.watch<LocaleProvider>();
     final isHindi = localeProvider.locale.languageCode == 'hi';
-    final user = userProvider.user;
-    final earnedBadges = user?.badges ?? [];
-
-    final allBadges = [
-      {
-        'id': 'first_case',
-        'icon': '⚖️',
-        'title': 'First Case',
-        'titleHi': 'पहला केस',
-        'description': 'Complete your first case',
-        'descriptionHi': 'अपना पहला केस पूरा करें',
-      },
-      {
-        'id': 'five_cases',
-        'icon': '🏆',
-        'title': 'Case Expert',
-        'titleHi': 'केस विशेषज्ञ',
-        'description': 'Complete 5 cases',
-        'descriptionHi': '5 केस पूरे करें',
-      },
-      {
-        'id': 'rising_star',
-        'icon': '⭐',
-        'title': 'Rising Star',
-        'titleHi': 'उभरता सितारा',
-        'description': 'Score 50+ points',
-        'descriptionHi': '50+ अंक प्राप्त करें',
-      },
-      {
-        'id': 'perfect_judgment',
-        'icon': '💯',
-        'title': 'Perfect Judgment',
-        'titleHi': 'सटीक निर्णय',
-        'description': 'Get max score in a case',
-        'descriptionHi': 'एक केस में अधिकतम अंक प्राप्त करें',
-      },
-      {
-        'id': 'ten_cases',
-        'icon': '🎯',
-        'title': 'Case Master',
-        'titleHi': 'केस मास्टर',
-        'description': 'Complete 10 cases',
-        'descriptionHi': '10 केस पूरे करें',
-      },
-      {
-        'id': 'century',
-        'icon': '💎',
-        'title': 'Century',
-        'titleHi': 'शतक',
-        'description': 'Score 100+ points',
-        'descriptionHi': '100+ अंक प्राप्त करें',
-      },
-    ];
+    final earnedBadges = userProvider.user?.badges ?? [];
+    final badgeInfo = userProvider.badgeInfo;
 
     return Scaffold(
       appBar: AppBar(
@@ -80,7 +42,6 @@ class AchievementsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Progress Header
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
@@ -98,13 +59,13 @@ class AchievementsScreen extends StatelessWidget {
                       children: [
                         Text(
                           isHindi ? 'बैज संग्रह' : 'Badge Collection',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         Text(
-                          '${earnedBadges.length}/${allBadges.length} ${isHindi ? 'अर्जित' : 'earned'}',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          '${earnedBadges.length}/${_badgeOrder.length} ${isHindi ? 'अर्जित' : 'earned'}',
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
                                 color: AppTheme.textPrimary.withAlpha(180),
                               ),
                         ),
@@ -114,10 +75,7 @@ class AchievementsScreen extends StatelessWidget {
                 ],
               ),
             ).animate().fadeIn(),
-
             const SizedBox(height: 24),
-
-            // Badges Grid
             GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -127,17 +85,29 @@ class AchievementsScreen extends StatelessWidget {
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
               ),
-              itemCount: allBadges.length,
+              itemCount: _badgeOrder.length,
               itemBuilder: (context, index) {
-                final badge = allBadges[index];
-                final isEarned = earnedBadges.contains(badge['id']);
+                final badgeId = _badgeOrder[index];
+                final badge = badgeInfo[badgeId];
+                if (badge == null) {
+                  return const SizedBox.shrink();
+                }
+
+                final isEarned = earnedBadges.contains(badgeId);
 
                 return _BadgeCard(
-                  icon: badge['icon']!,
-                  title: isHindi ? badge['titleHi']! : badge['title']!,
-                  description: isHindi ? badge['descriptionHi']! : badge['description']!,
-                  isEarned: isEarned,
-                ).animate(delay: Duration(milliseconds: 100 * index)).fadeIn().scale(
+                      icon: badge['icon'] ?? '🏅',
+                      title: isHindi
+                          ? (badge['titleHi'] ?? badge['title'] ?? '')
+                          : (badge['title'] ?? ''),
+                      description: isHindi
+                          ? (badge['descriptionHi'] ?? badge['description'] ?? '')
+                          : (badge['description'] ?? ''),
+                      isEarned: isEarned,
+                    )
+                    .animate(delay: Duration(milliseconds: 100 * index))
+                    .fadeIn()
+                    .scale(
                       begin: const Offset(0.9, 0.9),
                       end: const Offset(1, 1),
                     );
@@ -168,7 +138,9 @@ class _BadgeCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isEarned ? AppTheme.accentColor.withAlpha(30) : Colors.grey.shade100,
+        color: isEarned
+            ? AppTheme.accentColor.withAlpha(30)
+            : Colors.grey.shade100,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isEarned ? AppTheme.accentColor : Colors.grey.shade300,
@@ -188,9 +160,7 @@ class _BadgeCard extends StatelessWidget {
             child: Center(
               child: Text(
                 isEarned ? icon : '🔒',
-                style: TextStyle(
-                  fontSize: isEarned ? 30 : 24,
-                ),
+                style: TextStyle(fontSize: isEarned ? 30 : 24),
               ),
             ),
           ),

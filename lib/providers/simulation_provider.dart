@@ -19,8 +19,8 @@ class SimulationProvider extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    // Load sample cases (in production, fetch from Supabase)
-    await Future.delayed(const Duration(milliseconds: 300)); // Simulate network
+    // Load bundled offline case data.
+    await Future.delayed(const Duration(milliseconds: 150));
     _cases = CaseData.getSampleCases();
     _currentCaseIndex = 0;
     _selectedOptions = {};
@@ -29,12 +29,10 @@ class SimulationProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Select an option for current case
-  void selectOption(String optionId) {
-    if (currentCase != null) {
-      _selectedOptions[currentCase!.id] = optionId;
-      notifyListeners();
-    }
+  // Select an option for a specific case
+  void selectOption(String caseId, String optionId) {
+    _selectedOptions[caseId] = optionId;
+    notifyListeners();
   }
 
   // Get selected option for a case

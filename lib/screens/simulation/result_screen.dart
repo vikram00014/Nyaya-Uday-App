@@ -11,10 +11,7 @@ import '../../models/case_scenario_model.dart';
 class ResultScreen extends StatelessWidget {
   final CaseScenario caseScenario;
 
-  const ResultScreen({
-    super.key,
-    required this.caseScenario,
-  });
+  const ResultScreen({super.key, required this.caseScenario});
 
   @override
   Widget build(BuildContext context) {
@@ -52,17 +49,11 @@ class ResultScreen extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  const Text(
-                    '⚖️',
-                    style: TextStyle(fontSize: 60),
-                  ),
+                  const Text('⚖️', style: TextStyle(fontSize: 60)),
                   const SizedBox(height: 16),
                   Text(
                     isHindi ? 'आपका फैसला' : 'Your Judgment',
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 14,
-                    ),
+                    style: const TextStyle(color: Colors.white70, fontSize: 14),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -76,24 +67,24 @@ class ResultScreen extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     _getScoreMessage(score?['total'] ?? 0, isHindi),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                    ),
+                    style: const TextStyle(color: Colors.white, fontSize: 16),
                     textAlign: TextAlign.center,
                   ),
                 ],
               ),
-            ).animate().fadeIn().scale(begin: const Offset(0.9, 0.9), end: const Offset(1, 1)),
+            ).animate().fadeIn().scale(
+              begin: const Offset(0.9, 0.9),
+              end: const Offset(1, 1),
+            ),
 
             const SizedBox(height: 24),
 
             // Score Breakdown
             Text(
               isHindi ? 'स्कोर विवरण' : 'Score Breakdown',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ).animate(delay: 200.ms).fadeIn(),
 
             const SizedBox(height: 16),
@@ -161,7 +152,6 @@ class ResultScreen extends StatelessWidget {
                     onPressed: () {
                       // Go back to case list
                       Navigator.of(context).pop();
-                      Navigator.of(context).pop();
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryColor,
@@ -183,13 +173,21 @@ class ResultScreen extends StatelessWidget {
 
   String _getScoreMessage(int score, bool isHindi) {
     if (score >= 13) {
-      return isHindi ? 'उत्कृष्ट! आप में न्यायिक प्रतिभा है!' : 'Excellent! You have judicial talent!';
+      return isHindi
+          ? 'उत्कृष्ट! आप में न्यायिक प्रतिभा है!'
+          : 'Excellent! You have judicial talent!';
     } else if (score >= 9) {
-      return isHindi ? 'बहुत अच्छा! आप सही रास्ते पर हैं!' : 'Very good! You\'re on the right track!';
+      return isHindi
+          ? 'बहुत अच्छा! आप सही रास्ते पर हैं!'
+          : 'Very good! You\'re on the right track!';
     } else if (score >= 5) {
-      return isHindi ? 'अच्छा प्रयास! अभ्यास जारी रखें!' : 'Good try! Keep practicing!';
+      return isHindi
+          ? 'अच्छा प्रयास! अभ्यास जारी रखें!'
+          : 'Good try! Keep practicing!';
     } else {
-      return isHindi ? 'कोई बात नहीं! सीखते रहें!' : 'No worries! Keep learning!';
+      return isHindi
+          ? 'कोई बात नहीं! सीखते रहें!'
+          : 'No worries! Keep learning!';
     }
   }
 }
@@ -240,16 +238,16 @@ class _ScoreCard extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   description,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppTheme.textSecondary,
-                      ),
+                    color: AppTheme.textSecondary,
+                  ),
                 ),
               ],
             ),

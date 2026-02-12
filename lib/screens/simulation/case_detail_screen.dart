@@ -49,7 +49,7 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
     final isHindi = locale == 'hi';
 
     // Save selection
-    simulationProvider.selectOption(_selectedOptionId!);
+    simulationProvider.selectOption(widget.caseScenario.id, _selectedOptionId!);
 
     // Calculate score
     final score = simulationProvider.getScoreForCase(
