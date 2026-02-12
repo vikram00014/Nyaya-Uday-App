@@ -188,9 +188,9 @@ class RoadmapData {
           'https://thc.nic.in/Central%20Governmental%20Acts/Central%20Civil%20Acts/MAHARASHTRA%20JUDICIAL%20SERVICE%20RULES,%202008.pdf',
       sourceLabel: 'Maharashtra Judicial Service Rules, 2008 (as amended)',
       lastVerified: '12-02-2026',
-      verificationLevel: VerificationLevel.advisory,
+      verificationLevel: VerificationLevel.verified,
       verificationNote:
-          'Rule ranges differ by recruitment category (advocate/fresh graduate/departmental).',
+          'Age 21-35 from official rule PDF. Category-wise relaxations and recruitment details may vary by latest notification.',
     ),
     'RJ': StateEligibilityCriteria(
       state: 'Rajasthan',

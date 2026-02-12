@@ -31,7 +31,7 @@ Nyaya-Uday addresses this with simple pathway guidance, simulations, and trust-l
   - source label + **clickable source URL** (opens in browser),
   - last verified date,
   - trust status: `Verified` or `Advisory`.
-- **20 states with data:** UP, MP, MH, RJ, DL, BR, GJ, KA, KL, TN, WB, HR, PB, JH, CG, OD, AP, TS, AS, UK.
+- **20 states with data:** UP, MP, **MH (Verified)**, RJ, DL, BR, GJ, KA, KL, TN, WB, HR, PB, JH, CG, OD, AP, TS, AS, UK.
 - Remaining states get advisory fallback with clear notification check message.
 
 ### 2) Multilingual + Voice-Friendly Assistant
