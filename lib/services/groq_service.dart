@@ -1,18 +1,43 @@
 import 'dart:convert';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:http/http.dart' as http;
-
-import '../config/api_keys.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Groq LLM Service — sends chat completions via the Groq API.
 ///
 /// Uses the OpenAI-compatible endpoint with llama-3.3-70b-versatile.
-/// Falls back gracefully when the device is offline.
+/// The API key is stored in SharedPreferences so users can change it
+/// at runtime without rebuilding the app.
 class GroqService {
-  static const String _apiKey = ApiKeys.groqApiKey;
+  static const String _prefKey = 'groq_api_key';
   static const String _endpoint =
       'https://api.groq.com/openai/v1/chat/completions';
   static const String _model = 'llama-3.3-70b-versatile';
+
+  // ── API key management ──────────────────────────────────
+  /// Save a new API key to local storage.
+  static Future<void> saveApiKey(String key) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_prefKey, key.trim());
+  }
+
+  /// Get the currently stored API key, or null if none.
+  static Future<String?> getApiKey() async {
+    final prefs = await SharedPreferences.getInstance();
+    final key = prefs.getString(_prefKey);
+    return (key != null && key.trim().isNotEmpty) ? key.trim() : null;
+  }
+
+  /// Remove the stored API key.
+  static Future<void> removeApiKey() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_prefKey);
+  }
+
+  /// Returns true if an API key is configured.
+  static Future<bool> hasApiKey() async {
+    return (await getApiKey()) != null;
+  }
 
   /// Check whether the device currently has internet access.
   static Future<bool> isOnline() async {
@@ -38,6 +63,9 @@ class GroqService {
     required String userMessage,
   }) async {
     try {
+      final apiKey = await getApiKey();
+      if (apiKey == null) return null; // No key configured
+
       final messages = <Map<String, String>>[
         {'role': 'system', 'content': systemPrompt},
         ...conversationHistory,
@@ -49,7 +77,7 @@ class GroqService {
             Uri.parse(_endpoint),
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': 'Bearer $_apiKey',
+              'Authorization': 'Bearer $apiKey',
             },
             body: jsonEncode({
               'model': _model,

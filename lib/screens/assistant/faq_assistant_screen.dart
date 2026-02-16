@@ -96,7 +96,8 @@ class _FaqAssistantScreenState extends State<FaqAssistantScreen> {
 
   Future<void> _checkConnectivity() async {
     final online = await GroqService.isOnline();
-    if (mounted) setState(() => _isOnline = online);
+    final hasKey = await GroqService.hasApiKey();
+    if (mounted) setState(() => _isOnline = online && hasKey);
   }
 
   // Feature 1: Read user's state and education from provider
