@@ -12,11 +12,11 @@ void main() {
   group('Rank thresholds', () {
     test('matches configured ladder', () {
       expect(UserModel.getRankTitle(0), 'Trainee');
-      expect(UserModel.getRankTitle(50), 'Trainee Magistrate');
-      expect(UserModel.getRankTitle(100), 'Junior Judge');
-      expect(UserModel.getRankTitle(200), 'Senior Magistrate');
-      expect(UserModel.getRankTitle(350), 'District Judge');
-      expect(UserModel.getRankTitle(500), 'High Court Judge');
+      expect(UserModel.getRankTitle(50), 'Legal Intern');
+      expect(UserModel.getRankTitle(150), 'Junior Advocate');
+      expect(UserModel.getRankTitle(300), 'Civil Judge');
+      expect(UserModel.getRankTitle(500), 'District Judge');
+      expect(UserModel.getRankTitle(750), 'High Court Judge');
     });
   });
 
@@ -55,7 +55,7 @@ void main() {
       expect(badges.contains('centurion'), true);
       expect(badges.contains('ten_cases'), false);
       expect(badges.contains('century'), false);
-      expect(provider.user?.rank, 'Junior Judge');
+      expect(provider.user?.rank, 'Legal Intern');
     });
 
     test('awards expected badges without duplicates', () async {

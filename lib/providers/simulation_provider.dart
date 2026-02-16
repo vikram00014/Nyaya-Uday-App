@@ -48,7 +48,6 @@ class SimulationProvider extends ChangeNotifier {
   Map<String, int>? getScoreForCase(String caseId, String locale) {
     final optionId = _selectedOptions[caseId];
     if (optionId == null) {
-      debugPrint('❌ No option selected for case: $caseId');
       return null;
     }
 
@@ -57,27 +56,13 @@ class SimulationProvider extends ChangeNotifier {
       orElse: () => _cases.first,
     );
 
-    debugPrint(
-      '📊 Getting score for case: ${caseScenario.id}, locale: $locale, selected option: $optionId',
-    );
-
     final options = caseScenario.getOptions(locale);
-    debugPrint(
-      '📋 Available options: ${options.map((o) => '${o.id}(${o.totalScore})').join(', ')}',
-    );
 
     final selectedOption = options.firstWhere(
       (o) => o.id == optionId,
       orElse: () {
-        debugPrint(
-          '⚠️ Option $optionId not found! Falling back to first option',
-        );
         return options.first;
       },
-    );
-
-    debugPrint(
-      '✅ Selected option scores - F:${selectedOption.fairnessScore}, E:${selectedOption.evidenceScore}, B:${selectedOption.biasScore}, Total:${selectedOption.totalScore}',
     );
 
     return {

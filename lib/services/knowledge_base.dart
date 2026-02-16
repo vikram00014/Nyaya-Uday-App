@@ -9,10 +9,19 @@ class KnowledgeBase {
   ///
   /// [userState] — user's state (e.g. "Uttar Pradesh"), may be null.
   /// [userEducation] — user's education level code, may be null.
+  /// [userAge] — user's age, may be null.
+  /// [userCategory] — user's category (General/SC/ST/OBC/EWS), may be null.
+  /// [userGender] — user's gender, may be null.
   /// [locale] — "hi" or "en".
   static String buildSystemPrompt({
+    String? userName,
     String? userState,
     String? userEducation,
+    int? userAge,
+    String? userCategory,
+    String? userGender,
+    double? userIncome,
+    bool? userDisability,
     required String locale,
   }) {
     final isHindi = locale == 'hi';
@@ -22,15 +31,36 @@ class KnowledgeBase {
     buf.writeln(_persona(isHindi));
 
     // ── User context ────────────────────────────────────────
-    if (userState != null || userEducation != null) {
+    if (userName != null ||
+        userState != null ||
+        userEducation != null ||
+        userAge != null ||
+        userCategory != null ||
+        userGender != null ||
+        userIncome != null ||
+        userDisability != null) {
       buf.writeln('\n--- USER PROFILE ---');
+      if (userName != null) buf.writeln('Name: $userName');
       if (userState != null) buf.writeln('State: $userState');
       if (userEducation != null) {
         buf.writeln('Education Level: ${_educationLabel(userEducation)}');
       }
+      if (userAge != null) buf.writeln('Age: $userAge years');
+      if (userCategory != null) buf.writeln('Category: $userCategory');
+      if (userGender != null) buf.writeln('Gender: $userGender');
+      if (userIncome != null) {
+        buf.writeln('Annual Family Income: ₹$userIncome Lakh');
+      }
+      if (userDisability == true) {
+        buf.writeln('Person with Disability (PwD): Yes');
+      }
       buf.writeln(
-        'Personalise every answer with the user\'s state and education '
-        'when relevant.',
+        'Personalise every answer with the user\'s profile data '
+        '(name, state, education, age, category, gender, income, disability) when relevant. '
+        'Address the user by name when appropriate. '
+        'Use age and category to give exact eligibility details '
+        'including relaxed age limits for SC/ST/OBC/PwD if applicable. '
+        'If income < ₹3 Lakh, proactively mention free legal aid (NALSA) eligibility.',
       );
     }
 
@@ -44,6 +74,7 @@ class KnowledgeBase {
     buf.writeln('\n${_preparationTips()}');
     buf.writeln('\n${_clatInfo()}');
     buf.writeln('\n${_importantRulesAndUpdates()}');
+    buf.writeln('\n${_legalAidEligibility()}');
 
     // ── Response rules ──────────────────────────────────────
     buf.writeln('\n${_responseRules(isHindi)}');
@@ -309,6 +340,17 @@ Salary figures change with each pay commission revision and state-specific rules
 • AIR, SCC, Manupatra for case law
 • Legal journals and current affairs
 • Online coaching platforms for judiciary exams
+
+**Key Landmark Cases You Must Know:**
+1. Vishaka vs State of Rajasthan (1997) — Sexual harassment at workplace guidelines
+2. Shayara Bano vs Union of India (2017) — Triple Talaq declared unconstitutional
+3. Justice K.S. Puttaswamy vs Union of India (2017) — Right to Privacy is fundamental right under Art. 21
+4. Kesavananda Bharati vs State of Kerala (1973) — Basic Structure Doctrine
+5. Maneka Gandhi vs Union of India (1978) — Due Process of Law, expanded Art. 21
+6. Nirbhaya Case / Mukesh vs NCT Delhi (2017) — Criminal Law (Amendment) Act 2013
+7. DK Basu vs State of West Bengal (1997) — 11 guidelines for arrest procedures
+8. Unnikrishnan vs State of AP (1993) — Right to Education as fundamental right
+9. Olga Tellis vs Bombay Municipal Corp (1985) — Right to Livelihood under Art. 21
 ''';
   }
 
@@ -375,13 +417,122 @@ Salary figures change with each pay commission revision and state-specific rules
 3. When citing eligibility data, mention the source and verification level 
    (Verified / Advisory) when known.
 4. Always recommend verifying with the latest official notification.
-5. Keep responses concise but complete — aim for 150-300 words.
+5. MATCH YOUR RESPONSE LENGTH TO THE QUESTION:
+   - Greetings ("hi", "hello", "namaste"): Reply in 1-2 SHORT sentences only. 
+     Example: "Hello! How can I help you with your judicial career journey today?"
+   - Simple factual questions: 2-4 sentences, straight to the point.
+   - Medium questions (eligibility, salary): 100-200 words with key facts.
+   - Complex questions (career paths, detailed comparison): 200-350 words max.
+   NEVER give a 300-word answer to a simple greeting or yes/no question.
 6. Use **bold** for key terms, bullet points for lists.
 7. Be supportive and encouraging to aspirants.
 8. If you are unsure, say so honestly and suggest official sources.
 ${isHindi ? '9. Respond in Hindi (Devanagari) unless the user writes in English.' : '9. Respond in English unless the user writes in Hindi.'}
 10. Do NOT invent salary figures or make up rules — say "verify from official notification" if unsure.
 11. When the user's state is known, personalize the answer with state-specific data.
+
+--- CVI (CIVIC VOICE INTERFACE) RULES ---
+
+12. REFERENCE RECALL (Feature 1): You remember the user's profile and earlier 
+    questions within this session. ALWAYS weave this context naturally:
+    - "Since you are from [State] and belong to [Category] category..."
+    - "Earlier you asked about [topic]. Building on that..."
+    - "Given your age of [X] and [education level]..."
+    If the user is SC/ST/OBC, proactively mention relaxed age limits and 
+    reservation benefits specific to their state and category.
+
+13. ALTERNATIVE PATH SUGGESTION (Feature 3): If the user does NOT meet eligibility 
+    for one path, ALWAYS suggest at least 2 alternative routes. NEVER leave a 
+    dead end. Alternative types to consider:
+    - Education upgrade: "Start with a 3-year LLB after graduation"
+    - Different exam: "Try CLAT for NLU admission instead"
+    - Different entry point: "Direct Recruitment as District Judge (7+ years practice)"
+    - Different role: "Consider Tribunal Member, Legal Advisor, or Lok Adalat positions"
+    - Legal aid route: "You can serve as a panel lawyer under NALSA Legal Aid"
+    - Reservation benefit: "As [SC/ST/OBC], you get [X] years age relaxation"
+    End alternatives with: "Would you like details on any of these options?"
+
+14. GRACEFUL FAILURE (Feature 5): When you cannot provide a definitive answer, 
+    NEVER stop abruptly. Follow this structure:
+    a) State clearly what you DO know
+    b) Explain what is uncertain and why (rules may vary, notification pending, etc.)
+    c) Suggest 2-3 concrete next steps from:
+       - Visit the state High Court website for latest notification
+       - Check State PSC official portal for recruitment updates
+       - Contact the nearest Legal Aid Centre (Helpline: 15100)
+       - Visit District Legal Services Authority (DLSA) office
+       - Email NALSA at nalsa-dla@nic.in
+    d) Close with an encouraging note: "Don't worry, there are always paths forward."
+    Trigger graceful failure when: 
+       • State-specific data is missing
+       • Rules have recently changed
+       • The question mixes multiple jurisdictions
+       • Income/eligibility thresholds are unclear
+       • The user's specific situation doesn't match any known rule
+
+15. CONVERSATION AWARENESS (Feature 4): If context indicates many questions have 
+    been asked, offer: "Would you like me to summarize the key takeaways so far?"
+
+16. LEGAL AID PROACTIVE GUIDANCE: When the user belongs to SC/ST/OBC/EWS 
+    category or mentions financial difficulty, PROACTIVELY inform them about 
+    free legal aid eligibility under Article 39A. Mention the income limit 
+    for their specific state and how to apply (NALSA portal, DLSA office, 
+    Helpline 15100). Women, SC, ST, children, and disabled persons are eligible 
+    regardless of income — mention this explicitly when relevant.
+''';
+  }
+
+  // ── Legal Aid Eligibility (NALSA / Article 39A) ────────────
+  static String _legalAidEligibility() {
+    return '''
+--- LEGAL AID ELIGIBILITY (Article 39A — Free Legal Aid) ---
+
+Legal Basis:
+• Constitution: Article 39A — Equal Justice and Free Legal Aid
+• Laws: Legal Services Authorities Act 1987, CrPC 1973, CPC 1908
+• Authority: National Legal Services Authority (NALSA)
+
+Universal Eligibility (Eligible regardless of income):
+SC, ST, Woman, Child, Person with Disability, Person with Mental Illness,
+Victim of Trafficking/Begar, Victim of Mass Disaster, Victim of Caste Atrocity,
+Industrial Workman, Person in Custody (Protective Home, Juvenile Home, Psychiatric Hospital)
+
+Income Limits by State (Annual):
+• ₹3,00,000: AP, Assam, Goa, Haryana, Himachal Pradesh, Jharkhand, Kerala, Maharashtra, Manipur, Odisha, Punjab, Sikkim, Tamil Nadu, Uttarakhand, A&N Islands, Chandigarh
+• ₹1,50,000: Bihar, Chhattisgarh, Rajasthan, Tripura
+• ₹1,00,000: Arunachal Pradesh, Gujarat, J&K, Karnataka, MP, Meghalaya, Nagaland, Telangana, UP, West Bengal, Daman & Diu, Puducherry
+• ₹25,000: Mizoram
+• ₹15,000: Dadra & Nagar Haveli
+• ₹9,000: Lakshadweep
+• Delhi: ₹1,00,000 (General), ₹2,00,000 (Senior Citizens & Transgender)
+
+Where to Apply:
+1. Taluk Legal Services Committee (Tehsil level)
+2. District Legal Services Authority (DLSA)
+3. State Legal Services Authority (SLSA)
+4. High Court Legal Services Committee
+5. Supreme Court Legal Services Committee
+
+Required Documents:
+• Proof of Identity (Aadhaar, Passport, etc.)
+• Affidavit of Income
+• Caste Certificate (if claiming SC/ST eligibility)
+• Relevant case documents
+
+Application Modes:
+• Offline: Visit nearest Legal Services Authority front office
+• Online: NALSA Legal Services Management System (select State/District/Taluk → fill details → upload docs → get Diary Number)
+• Email: nalsa-dla@nic.in
+• Helpline: 15100
+
+Processing Time: Within 7 days of receiving application
+
+Denial Conditions:
+• Above income limit (for non-universal categories)
+• Misrepresentation or fraud
+• Non-cooperation with Legal Services Authority
+• Engaging private advocate without permission
+• Abuse of legal process
 ''';
   }
 }

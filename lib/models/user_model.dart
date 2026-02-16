@@ -8,6 +8,12 @@ class UserModel {
   final List<String> badges;
   final String rank;
   final DateTime? createdAt;
+  // New fields for better personalization
+  final int? age;
+  final String? category; // General, SC, ST, OBC, EWS
+  final String? gender; // Male, Female, Other
+  final double? annualIncome; // For legal aid eligibility
+  final bool? hasDisability; // PWD status
 
   UserModel({
     this.id,
@@ -19,6 +25,11 @@ class UserModel {
     this.badges = const [],
     this.rank = 'Trainee',
     this.createdAt,
+    this.age,
+    this.category,
+    this.gender,
+    this.annualIncome,
+    this.hasDisability,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -31,9 +42,14 @@ class UserModel {
       casesCompleted: json['cases_completed'] ?? 0,
       badges: List<String>.from(json['badges'] ?? []),
       rank: json['rank'] ?? 'Trainee',
-      createdAt: json['created_at'] != null 
-          ? DateTime.parse(json['created_at']) 
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
           : null,
+      age: json['age'],
+      category: json['category'],
+      gender: json['gender'],
+      annualIncome: (json['annual_income'] as num?)?.toDouble(),
+      hasDisability: json['has_disability'],
     );
   }
 
@@ -47,6 +63,11 @@ class UserModel {
       'cases_completed': casesCompleted,
       'badges': badges,
       'rank': rank,
+      if (age != null) 'age': age,
+      if (category != null) 'category': category,
+      if (gender != null) 'gender': gender,
+      if (annualIncome != null) 'annual_income': annualIncome,
+      if (hasDisability != null) 'has_disability': hasDisability,
     };
   }
 
@@ -59,6 +80,11 @@ class UserModel {
     int? casesCompleted,
     List<String>? badges,
     String? rank,
+    int? age,
+    String? category,
+    String? gender,
+    double? annualIncome,
+    bool? hasDisability,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -70,16 +96,21 @@ class UserModel {
       badges: badges ?? this.badges,
       rank: rank ?? this.rank,
       createdAt: createdAt,
+      age: age ?? this.age,
+      category: category ?? this.category,
+      gender: gender ?? this.gender,
+      annualIncome: annualIncome ?? this.annualIncome,
+      hasDisability: hasDisability ?? this.hasDisability,
     );
   }
 
-  // Get rank title based on score
+  // Get rank title based on score (aligned with dossier)
   static String getRankTitle(int score) {
-    if (score >= 500) return 'High Court Judge';
-    if (score >= 350) return 'District Judge';
-    if (score >= 200) return 'Senior Magistrate';
-    if (score >= 100) return 'Junior Judge';
-    if (score >= 50) return 'Trainee Magistrate';
+    if (score >= 750) return 'High Court Judge';
+    if (score >= 500) return 'District Judge';
+    if (score >= 300) return 'Civil Judge';
+    if (score >= 150) return 'Junior Advocate';
+    if (score >= 50) return 'Legal Intern';
     return 'Trainee';
   }
 }

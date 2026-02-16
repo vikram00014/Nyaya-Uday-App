@@ -50,7 +50,6 @@ class _SplashScreenState extends State<SplashScreen> {
         ),
       );
     } catch (e) {
-      debugPrint('Splash initialization error: $e');
       if (!mounted) return;
       // Navigate to welcome screen on error
       Navigator.of(context).pushReplacement(

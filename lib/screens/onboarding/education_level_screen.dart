@@ -11,10 +11,7 @@ import '../home/home_screen.dart';
 class EducationLevelScreen extends StatefulWidget {
   final String selectedState;
 
-  const EducationLevelScreen({
-    super.key,
-    required this.selectedState,
-  });
+  const EducationLevelScreen({super.key, required this.selectedState});
 
   @override
   State<EducationLevelScreen> createState() => _EducationLevelScreenState();
@@ -23,6 +20,12 @@ class EducationLevelScreen extends StatefulWidget {
 class _EducationLevelScreenState extends State<EducationLevelScreen> {
   String? _selectedLevel;
   bool _isLoading = false;
+  String? _selectedCategory;
+  String? _selectedGender;
+  bool _hasDisability = false;
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _ageController = TextEditingController();
+  final TextEditingController _incomeController = TextEditingController();
 
   final List<Map<String, dynamic>> _educationLevels = [
     {
@@ -61,10 +64,20 @@ class _EducationLevelScreenState extends State<EducationLevelScreen> {
     final userProvider = context.read<UserProvider>();
     final localeProvider = context.read<LocaleProvider>();
 
+    final name = _nameController.text.trim();
+    if (name.isNotEmpty) {
+      await userProvider.updateDisplayName(name);
+    }
+
     await userProvider.saveUser(
       state: widget.selectedState,
       educationLevel: _selectedLevel!,
       preferredLanguage: localeProvider.locale.languageCode,
+      age: int.tryParse(_ageController.text),
+      category: _selectedCategory,
+      gender: _selectedGender,
+      annualIncome: double.tryParse(_incomeController.text),
+      hasDisability: _hasDisability ? true : null,
     );
 
     if (!mounted) return;
@@ -90,7 +103,7 @@ class _EducationLevelScreenState extends State<EducationLevelScreen> {
         ),
       ),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -99,9 +112,9 @@ class _EducationLevelScreenState extends State<EducationLevelScreen> {
               Text(
                 l10n.selectEducation,
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      color: AppTheme.primaryColor,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  color: AppTheme.primaryColor,
+                  fontWeight: FontWeight.bold,
+                ),
               ).animate().fadeIn().slideX(begin: -0.1, end: 0),
 
               const SizedBox(height: 8),
@@ -110,22 +123,49 @@ class _EducationLevelScreenState extends State<EducationLevelScreen> {
                 isHindi
                     ? 'यह आपके व्यक्तिगत रोडमैप को अनुकूलित करने में मदद करेगा'
                     : 'This will help customize your personalized roadmap',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: AppTheme.textSecondary,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge?.copyWith(color: AppTheme.textSecondary),
               ).animate(delay: 100.ms).fadeIn(),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
+
+              // ── Name Input ─────────────────────────
+              Text(
+                isHindi ? 'आपका नाम' : 'Your Name',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 50,
+                child: TextField(
+                  controller: _nameController,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: InputDecoration(
+                    hintText: isHindi
+                        ? 'अपना नाम दर्ज करें'
+                        : 'Enter your name',
+                    prefixIcon: const Icon(Icons.person_outline, size: 20),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 24),
 
               // Education Level Options
-              Expanded(
-                child: ListView.builder(
-                  itemCount: _educationLevels.length,
-                  itemBuilder: (context, index) {
-                    final level = _educationLevels[index];
-                    final isSelected = _selectedLevel == level['code'];
+              ...List.generate(_educationLevels.length, (index) {
+                final level = _educationLevels[index];
+                final isSelected = _selectedLevel == level['code'];
 
-                    return Padding(
+                return Padding(
                       padding: const EdgeInsets.only(bottom: 16.0),
                       child: InkWell(
                         onTap: () {
@@ -150,7 +190,9 @@ class _EducationLevelScreenState extends State<EducationLevelScreen> {
                             boxShadow: isSelected
                                 ? [
                                     BoxShadow(
-                                      color: AppTheme.primaryColor.withAlpha(30),
+                                      color: AppTheme.primaryColor.withAlpha(
+                                        30,
+                                      ),
                                       blurRadius: 10,
                                       offset: const Offset(0, 4),
                                     ),
@@ -186,8 +228,8 @@ class _EducationLevelScreenState extends State<EducationLevelScreen> {
                                       level['code'] == 'class_10'
                                           ? l10n.class10
                                           : level['code'] == 'class_12'
-                                              ? l10n.class12
-                                              : l10n.graduate,
+                                          ? l10n.class12
+                                          : l10n.graduate,
                                       style: TextStyle(
                                         fontSize: 18,
                                         fontWeight: FontWeight.bold,
@@ -213,7 +255,9 @@ class _EducationLevelScreenState extends State<EducationLevelScreen> {
                                         vertical: 4,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: AppTheme.accentColor.withAlpha(50),
+                                        color: AppTheme.accentColor.withAlpha(
+                                          50,
+                                        ),
                                         borderRadius: BorderRadius.circular(20),
                                       ),
                                       child: Text(
@@ -249,9 +293,187 @@ class _EducationLevelScreenState extends State<EducationLevelScreen> {
                           ),
                         ),
                       ),
-                    ).animate(delay: Duration(milliseconds: 100 * index)).fadeIn().slideY(begin: 0.1, end: 0);
-                  },
+                    )
+                    .animate(delay: Duration(milliseconds: 100 * index))
+                    .fadeIn()
+                    .slideY(begin: 0.1, end: 0);
+              }),
+
+              const SizedBox(height: 16),
+
+              // ── Age Input ─────────────────────────
+              Text(
+                isHindi ? 'आपकी आयु (वैकल्पिक)' : 'Your Age (Optional)',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textPrimary,
                 ),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 50,
+                child: TextField(
+                  controller: _ageController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    hintText: isHindi ? 'उदा. 18' : 'e.g. 18',
+                    prefixIcon: const Icon(Icons.cake_outlined, size: 20),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // ── Category Selection ─────────────────
+              Text(
+                isHindi ? 'श्रेणी (वैकल्पिक)' : 'Category (Optional)',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                children: ['General', 'SC', 'ST', 'OBC', 'EWS'].map((cat) {
+                  final isSelected = _selectedCategory == cat;
+                  return ChoiceChip(
+                    label: Text(cat, style: const TextStyle(fontSize: 13)),
+                    selected: isSelected,
+                    selectedColor: AppTheme.primaryColor.withAlpha(30),
+                    onSelected: (selected) {
+                      setState(() {
+                        _selectedCategory = selected ? cat : null;
+                      });
+                    },
+                  );
+                }).toList(),
+              ),
+
+              const SizedBox(height: 16),
+
+              // ── Gender Selection ────────────────────
+              Text(
+                isHindi ? 'लिंग (वैकल्पिक)' : 'Gender (Optional)',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                children:
+                    [
+                      {
+                        'code': 'Male',
+                        'label': isHindi ? 'पुरुष' : 'Male',
+                        'icon': '👨',
+                      },
+                      {
+                        'code': 'Female',
+                        'label': isHindi ? 'महिला' : 'Female',
+                        'icon': '👩',
+                      },
+                      {
+                        'code': 'Other',
+                        'label': isHindi ? 'अन्य' : 'Other',
+                        'icon': '🧑',
+                      },
+                    ].map((g) {
+                      final isSelected = _selectedGender == g['code'];
+                      return ChoiceChip(
+                        avatar: Text(
+                          g['icon']!,
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                        label: Text(
+                          g['label']!,
+                          style: const TextStyle(fontSize: 13),
+                        ),
+                        selected: isSelected,
+                        selectedColor: AppTheme.primaryColor.withAlpha(30),
+                        onSelected: (selected) {
+                          setState(() {
+                            _selectedGender = selected ? g['code'] : null;
+                          });
+                        },
+                      );
+                    }).toList(),
+              ),
+
+              const SizedBox(height: 16),
+
+              // ── Annual Income ────────────────────
+              Text(
+                isHindi
+                    ? 'वार्षिक आय - लाख में (वैकल्पिक)'
+                    : 'Annual Income in Lakhs (Optional)',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                isHindi
+                    ? '💡 यह मुफ्त कानूनी सहायता पात्रता जांचने के लिए है'
+                    : '💡 This helps check free legal aid eligibility',
+                style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 50,
+                child: TextField(
+                  controller: _incomeController,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: isHindi ? 'उदा. 2.5' : 'e.g. 2.5',
+                    prefixIcon: const Icon(Icons.currency_rupee, size: 20),
+                    suffixText: isHindi ? 'लाख/वर्ष' : 'Lakh/yr',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // ── Disability Status ────────────────────
+              Row(
+                children: [
+                  Checkbox(
+                    value: _hasDisability,
+                    onChanged: (val) =>
+                        setState(() => _hasDisability = val ?? false),
+                    activeColor: AppTheme.primaryColor,
+                  ),
+                  Expanded(
+                    child: Text(
+                      isHindi
+                          ? 'दिव्यांगजन (PwD) श्रेणी'
+                          : 'Person with Disability (PwD)',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                  ),
+                ],
               ),
 
               const SizedBox(height: 16),

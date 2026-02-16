@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../config/app_theme.dart';
 import '../../providers/locale_provider.dart';
@@ -40,9 +41,15 @@ class _ChatMessage {
 
 // ── Session context (Feature 1) ─────────────────────────────
 class _SessionContext {
+  String? userName;
   String? userState;
   String? userStateDisplay;
   String? userEducation;
+  int? userAge;
+  String? userCategory;
+  String? userGender;
+  double? userIncome;
+  bool? userDisability;
   final List<String> topicsDiscussed = [];
   int interactionCount = 0;
   final DateTime sessionStart = DateTime.now();
@@ -105,8 +112,14 @@ class _FaqAssistantScreenState extends State<FaqAssistantScreen> {
     final userProvider = context.read<UserProvider>();
     final user = userProvider.user;
     if (user != null) {
+      _session.userName = userProvider.displayName;
       _session.userState = user.state;
       _session.userEducation = user.educationLevel;
+      _session.userAge = user.age;
+      _session.userCategory = user.category;
+      _session.userGender = user.gender;
+      _session.userIncome = user.annualIncome;
+      _session.userDisability = user.hasDisability;
       final stateInfo = StateCatalog.tryResolve(user.state);
       if (stateInfo != null) {
         final localeProvider = context.read<LocaleProvider>();
@@ -124,30 +137,62 @@ class _FaqAssistantScreenState extends State<FaqAssistantScreen> {
     final isHindi = context.read<LocaleProvider>().locale.languageCode == 'hi';
     String welcome;
 
+    final modeNote = _isOnline
+        ? (isHindi
+              ? '\n\n✨ **AI मोड सक्रिय** — कोई भी सवाल स्वतंत्र रूप से पूछें!'
+              : '\n\n✨ **AI mode active** — ask any question freely!')
+        : (isHindi
+              ? '\n\n📴 **ऑफ़लाइन मोड** — पूर्व-निर्धारित FAQ से उत्तर मिलेंगे।'
+              : '\n\n📴 **Offline mode** — answers from pre-built FAQ.');
+
     if (_session.userState != null && _session.userEducation != null) {
       final edu = _session.userEducation!;
       final state = _session.userStateDisplay ?? _session.userState!;
+      final extraInfo = <String>[];
+      if (_session.userAge != null) {
+        extraInfo.add(
+          isHindi ? 'आयु: ${_session.userAge}' : 'Age: ${_session.userAge}',
+        );
+      }
+      if (_session.userCategory != null) {
+        extraInfo.add(
+          isHindi
+              ? 'श्रेणी: ${_session.userCategory}'
+              : 'Category: ${_session.userCategory}',
+        );
+      }
+      if (_session.userIncome != null) {
+        extraInfo.add(
+          isHindi
+              ? 'आय: ₹${_session.userIncome} लाख'
+              : 'Income: ₹${_session.userIncome}L',
+        );
+      }
+      final extraStr = extraInfo.isNotEmpty ? ' (${extraInfo.join(', ')})' : '';
+      final nameGreet = _session.userName != null
+          ? ', ${_session.userName}'
+          : '';
       if (isHindi) {
         welcome =
-            'नमस्ते! 🙏 मैं आपका न्यायिक सहायक हूं।\n\n'
+            'नमस्ते$nameGreet! 🙏 मैं आपका न्यायिक सहायक हूं।\n\n'
             'मुझे पता है कि आप **$state** से हैं '
-            'और आपकी शिक्षा स्तर **$edu** है।\n\n'
+            'और आपकी शिक्षा स्तर **$edu** है।$extraStr\n\n'
             'आप न्यायिक करियर के बारे में कोई भी सवाल पूछ सकते हैं। '
-            'टाइप करें या माइक बटन दबाकर बोलें।';
+            'टाइप करें या माइक बटन दबाकर बोलें।$modeNote';
       } else {
         welcome =
-            'Hello! 🙏 I am your Judicial Career Assistant.\n\n'
+            'Hello$nameGreet! 🙏 I am your Judicial Career Assistant.\n\n'
             'I see that you are from **$state** '
-            'and your education level is **$edu**.\n\n'
+            'and your education level is **$edu**.$extraStr\n\n'
             'You can ask me any question about the judicial career path. '
-            'Type or tap the mic to speak.';
+            'Type or tap the mic to speak.$modeNote';
       }
     } else {
       welcome = isHindi
           ? 'नमस्ते! 🙏 मैं आपका न्यायिक सहायक हूं।\n\n'
-                'न्यायिक करियर के बारे में कोई भी सवाल पूछें।'
+                'न्यायिक करियर के बारे में कोई भी सवाल पूछें।$modeNote'
           : 'Hello! 🙏 I am your Judicial Career Assistant.\n\n'
-                'Ask me any question about the judicial career path.';
+                'Ask me any question about the judicial career path.$modeNote';
     }
 
     setState(() {
@@ -233,63 +278,31 @@ class _FaqAssistantScreenState extends State<FaqAssistantScreen> {
 
     _session.interactionCount++;
 
-    // Feature 4: Time awareness check
-    if (!_timeWarningShown && _session.interactionCount >= 8) {
-      _timeWarningShown = true;
-      _offerTimeCheck(isHindi);
-      return;
+    if (_isOnline) {
+      // Online mode: send directly to LLM — no checkpoint needed.
+      // The LLM has the full knowledge base and can answer any question.
+      _processQuery(query, isHindi);
+    } else {
+      // Offline mode: Process rule-based FAQ directly.
+      // Checkpoint only shown in the response when results are found.
+      _processQuery(query, isHindi);
     }
 
-    // Feature 4: Summary offer after 5 interactions
+    // Feature 4: Time awareness — never blocks or drops user input
     if (!_summaryOffered && _session.interactionCount >= 5) {
       _summaryOffered = true;
-      _offerSummary(isHindi);
-      // Continue processing below after offering
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) _offerSummary(isHindi);
+      });
+    } else if (!_timeWarningShown && _session.interactionCount >= 8) {
+      _timeWarningShown = true;
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) _offerTimeCheck(isHindi);
+      });
     }
-
-    // Feature 2: Decision Checkpoint
-    _pendingQuery = query;
-    _showCheckpoint(query, isHindi);
   }
 
-  // ── Feature 2: Structured Decision Checkpoint ─────────────
-  void _showCheckpoint(String query, bool isHindi) {
-    final lowerQ = query.toLowerCase();
-    String topic = _detectTopic(lowerQ, isHindi);
-
-    String checkpointText;
-    if (_session.userStateDisplay != null) {
-      if (isHindi) {
-        checkpointText =
-            '📋 मुझे पुष्टि करने दें: आप **$topic** के बारे में '
-            '**${_session.userStateDisplay}** राज्य के संदर्भ में पूछ रहे हैं।\n\n'
-            'क्या यह सही है?';
-      } else {
-        checkpointText =
-            '📋 Let me confirm: you are asking about **$topic** '
-            'in **${_session.userStateDisplay}** state.\n\n'
-            'Is that correct?';
-      }
-    } else {
-      if (isHindi) {
-        checkpointText =
-            '📋 मुझे पुष्टि करने दें: आप **$topic** के बारे में पूछ रहे हैं।\n\n'
-            'क्या यह सही है?';
-      } else {
-        checkpointText =
-            '📋 Let me confirm: you are asking about **$topic**.\n\n'
-            'Is that correct?';
-      }
-    }
-
-    setState(() {
-      _awaitingCheckpoint = true;
-      _messages.add(
-        _ChatMessage(text: checkpointText, type: MessageType.checkpoint),
-      );
-    });
-    _scrollToBottom();
-  }
+  // ── Feature 2: Topic detection (used for session tracking) ─
 
   String _detectTopic(String query, bool isHindi) {
     if (query.contains('12') || query.contains('बारहवीं')) {
@@ -342,7 +355,7 @@ class _FaqAssistantScreenState extends State<FaqAssistantScreen> {
     return isHindi ? 'न्यायिक करियर' : 'judicial career';
   }
 
-  // User confirms or corrects checkpoint
+  // User confirms or continues from checkpoint
   void _onCheckpointConfirm(bool confirmed) {
     final isHindi = context.read<LocaleProvider>().locale.languageCode == 'hi';
 
@@ -351,37 +364,45 @@ class _FaqAssistantScreenState extends State<FaqAssistantScreen> {
       _messages.add(
         _ChatMessage(
           text: confirmed
-              ? (isHindi ? '✅ हां, सही है' : '✅ Yes, correct')
-              : (isHindi ? '❌ नहीं, बदल दें' : '❌ No, let me rephrase'),
+              ? (isHindi ? '👍 धन्यवाद!' : '👍 Thanks!')
+              : (isHindi ? '🔄 और जानकारी चाहिए' : '🔄 Need more info'),
           type: MessageType.user,
         ),
       );
     });
 
     if (confirmed) {
-      _processQuery(_pendingQuery, isHindi);
-    } else {
+      // User found the answer helpful — offer to continue
       setState(() {
         _messages.add(
           _ChatMessage(
             text: isHindi
-                ? 'कोई बात नहीं! कृपया अपना सवाल दोबारा पूछें।'
-                : 'No problem! Please rephrase your question.',
+                ? 'बहुत अच्छा! कोई और सवाल पूछें या ऊपर दिए विषयों में से चुनें।'
+                : 'Great! Feel free to ask another question or pick from the topics above.',
             type: MessageType.bot,
           ),
         );
       });
+    } else {
+      // User needs more — show alternatives
+      setState(() {
+        _messages.add(
+          _ChatMessage(
+            text: isHindi
+                ? 'कोई बात नहीं! कृपया अपना सवाल दूसरे तरीके से पूछें, या इन विकल्पों को आज़माएं:'
+                : 'No problem! Try rephrasing your question, or try these alternatives:',
+            type: MessageType.bot,
+          ),
+        );
+      });
+      _handleNoResults(_pendingQuery, isHindi);
     }
     _scrollToBottom();
   }
 
-  // ── Process confirmed query ───────────────────────────────
+  // ── Process query ─────────────────────────────────────────
   void _processQuery(String query, bool isHindi) {
     final lowerQ = query.toLowerCase();
-
-    // Voice intent detection
-    final intentQuery = _detectVoiceIntent(lowerQ, isHindi);
-    final searchQ = intentQuery ?? lowerQ;
 
     // Feature 1: Track topic in session
     final topic = _detectTopic(lowerQ, isHindi);
@@ -389,13 +410,15 @@ class _FaqAssistantScreenState extends State<FaqAssistantScreen> {
       _session.topicsDiscussed.add(topic);
     }
 
-    // ── LLM path (online) ───────────────────────────────────
+    // ── LLM path (online) — handles any question freely ────
     if (_isOnline) {
       _processWithLlm(query, isHindi);
       return;
     }
 
     // ── Rule-based path (offline fallback) ──────────────────
+    final intentQuery = _detectVoiceIntent(lowerQ, isHindi);
+    final searchQ = intentQuery ?? lowerQ;
     _processRuleBased(searchQ, lowerQ, isHindi);
   }
 
@@ -406,19 +429,41 @@ class _FaqAssistantScreenState extends State<FaqAssistantScreen> {
 
     final locale = isHindi ? 'hi' : 'en';
     final systemPrompt = KnowledgeBase.buildSystemPrompt(
+      userName: _session.userName,
       userState: _session.userStateDisplay ?? _session.userState,
       userEducation: _session.userEducation,
+      userAge: _session.userAge,
+      userCategory: _session.userCategory,
+      userGender: _session.userGender,
+      userIncome: _session.userIncome,
+      userDisability: _session.userDisability,
       locale: locale,
     );
 
-    // Add previous context reference if available
+    // Feature 1: Add rich context for personalized LLM responses
     String enrichedQuery = query;
+    final contextParts = <String>[];
     if (_session.topicsDiscussed.length > 1) {
       final prevTopics = _session.topicsDiscussed
           .sublist(0, _session.topicsDiscussed.length - 1)
           .join(', ');
-      enrichedQuery =
-          '(Previously discussed: $prevTopics)\n\nNew question: $query';
+      contextParts.add('Previously discussed: $prevTopics');
+    }
+    if (_session.userAge != null) {
+      contextParts.add('User age: ${_session.userAge}');
+    }
+    if (_session.userCategory != null) {
+      contextParts.add('User category: ${_session.userCategory}');
+    }
+    if (_session.userGender != null) {
+      contextParts.add('User gender: ${_session.userGender}');
+    }
+    if (contextParts.isNotEmpty) {
+      enrichedQuery = '(${contextParts.join(' | ')})';
+      if (_session.userIncome != null) {
+        enrichedQuery += ' | Income: ₹${_session.userIncome} Lakh';
+      }
+      enrichedQuery += '\n\nQuestion: $query';
     }
 
     final reply = await GroqService.chat(
@@ -445,6 +490,14 @@ class _FaqAssistantScreenState extends State<FaqAssistantScreen> {
       setState(() {
         _isLlmTyping = false;
         _isOnline = false; // mark offline for subsequent queries
+        _messages.add(
+          _ChatMessage(
+            text: isHindi
+                ? '⚠️ AI सेवा अभी उपलब्ध नहीं है। ऑफ़लाइन मोड पर स्विच किया गया।'
+                : '⚠️ AI service unavailable. Switched to offline mode.',
+            type: MessageType.bot,
+          ),
+        );
       });
       final lowerQ = query.toLowerCase();
       final intentQuery = _detectVoiceIntent(lowerQ, isHindi);
@@ -455,6 +508,7 @@ class _FaqAssistantScreenState extends State<FaqAssistantScreen> {
   }
 
   /// Original rule-based FAQ matching (offline fallback).
+  /// Checkpoint confirmation is shown alongside the answer (not before query).
   void _processRuleBased(String searchQ, String lowerQ, bool isHindi) {
     final allFaqs = _getFaqs(isHindi);
     final results = allFaqs.where((faq) => _matchesFaq(faq, searchQ)).toList();
@@ -487,6 +541,18 @@ class _FaqAssistantScreenState extends State<FaqAssistantScreen> {
             faqResults: results,
           ),
         );
+
+        // Feature 2: Show confirmation checkpoint AFTER presenting the answer
+        _messages.add(
+          _ChatMessage(
+            text: isHindi
+                ? '✅ क्या यह जानकारी आपके लिए उपयोगी थी? कुछ और पूछना है?'
+                : '✅ Was this information helpful? Want to ask anything else?',
+            type: MessageType.checkpoint,
+          ),
+        );
+        _pendingQuery = searchQ;
+        _awaitingCheckpoint = true;
       });
     } else {
       // Feature 3 + 5: No results → Alternatives + Graceful failure
@@ -597,6 +663,9 @@ class _FaqAssistantScreenState extends State<FaqAssistantScreen> {
     final topics = _session.topicsDiscussed;
     final state = _session.userStateDisplay ?? '';
 
+    final income = _session.userIncome;
+    final hasDisability = _session.userDisability;
+
     String summary;
     if (isHindi) {
       summary = '📋 **आज की चर्चा का सारांश:**\n\n';
@@ -604,9 +673,20 @@ class _FaqAssistantScreenState extends State<FaqAssistantScreen> {
       if (_session.userEducation != null) {
         summary += '• शिक्षा स्तर: **${_session.userEducation}**\n';
       }
+      if (income != null) {
+        summary += '• वार्षिक आय: **₹${income.toStringAsFixed(1)} लाख**\n';
+      }
+      if (hasDisability == true) {
+        summary += '• PwD श्रेणी: **हाँ** (आयु/प्रयास में छूट लागू)\n';
+      }
       summary += '• कुल सवाल: **${_session.interactionCount}**\n';
       if (topics.isNotEmpty) {
         summary += '• चर्चित विषय: **${topics.join(", ")}**\n';
+      }
+      if (income != null && income < 3) {
+        summary +=
+            '\n💡 **NALSA मुफ्त कानूनी सहायता:** आपकी आय ₹3 लाख से कम है — '
+            'आप NALSA के तहत मुफ्त कानूनी सहायता के पात्र हो सकते हैं।\n';
       }
       summary +=
           '\n🏛️ आगे के लिए अपने राज्य की **आधिकारिक भर्ती अधिसूचना** '
@@ -617,9 +697,21 @@ class _FaqAssistantScreenState extends State<FaqAssistantScreen> {
       if (_session.userEducation != null) {
         summary += '• Education level: **${_session.userEducation}**\n';
       }
+      if (income != null) {
+        summary += '• Annual income: **₹${income.toStringAsFixed(1)} Lakhs**\n';
+      }
+      if (hasDisability == true) {
+        summary +=
+            '• PwD category: **Yes** (age/attempt relaxations may apply)\n';
+      }
       summary += '• Total questions: **${_session.interactionCount}**\n';
       if (topics.isNotEmpty) {
         summary += '• Topics covered: **${topics.join(", ")}**\n';
+      }
+      if (income != null && income < 3) {
+        summary +=
+            '\n💡 **NALSA Free Legal Aid:** Your income is under ₹3 Lakhs — '
+            'you may be eligible for free legal aid under NALSA.\n';
       }
       summary +=
           '\n🏛️ Be sure to check the **official recruitment notification** '
@@ -1088,25 +1180,45 @@ For exact figures, check the latest official judicial recruitment notification f
     ];
   }
 
-  // ── Quick questions ───────────────────────────────────────
+  // ── Quick questions — mode-aware suggestions ──────────────
   List<Map<String, String>> _getQuickQuestions(bool isHindi) {
-    return [
-      {
-        'text': isHindi ? '12वीं के बाद जज कैसे बनें?' : 'Judge after 12th?',
-        'query': '12th',
-      },
-      {
-        'text': isHindi ? 'आयु सीमा क्या है?' : 'Age limit?',
-        'query': 'eligibility',
-      },
-      {'text': isHindi ? 'वेतन कितनी है?' : 'Salary?', 'query': 'salary'},
-      {'text': isHindi ? 'कौन सी परीक्षा?' : 'Which exam?', 'query': 'exam'},
-      {
-        'text': isHindi ? 'तैयारी कैसे करें?' : 'How to prepare?',
-        'query': 'prepare',
-      },
-      {'text': isHindi ? 'CLAT क्या है?' : 'What is CLAT?', 'query': 'CLAT'},
-    ];
+    if (_isOnline) {
+      // Online: More open-ended questions that LLM can answer deeply
+      return [
+        {
+          'text': isHindi
+              ? 'मेरे राज्य में जज कैसे बनें?'
+              : 'How to become judge in my state?',
+        },
+        {'text': isHindi ? 'मेरी पात्रता क्या है?' : 'Am I eligible?'},
+        {
+          'text': isHindi
+              ? 'तैयारी की पूरी रणनीति बताएं'
+              : 'Full preparation strategy?',
+        },
+        {
+          'text': isHindi
+              ? 'वेतन और सुविधाएं क्या हैं?'
+              : 'Salary and benefits?',
+        },
+        {
+          'text': isHindi
+              ? 'मुफ्त कानूनी सहायता कैसे मिले?'
+              : 'How to get free legal aid?',
+        },
+        {'text': isHindi ? 'CLAT vs राज्य परीक्षा?' : 'CLAT vs State exam?'},
+      ];
+    } else {
+      // Offline: FAQ-matching friendly questions
+      return [
+        {'text': isHindi ? '12वीं के बाद जज कैसे बनें?' : 'Judge after 12th?'},
+        {'text': isHindi ? 'आयु सीमा क्या है?' : 'Age limit?'},
+        {'text': isHindi ? 'वेतन कितनी है?' : 'Salary?'},
+        {'text': isHindi ? 'कौन सी परीक्षा?' : 'Which exam?'},
+        {'text': isHindi ? 'तैयारी कैसे करें?' : 'How to prepare?'},
+        {'text': isHindi ? 'CLAT क्या है?' : 'What is CLAT?'},
+      ];
+    }
   }
 
   // ── Build UI ──────────────────────────────────────────────
@@ -1437,24 +1549,24 @@ For exact figures, check the latest official judicial recruitment notification f
     );
   }
 
-  // Feature 2: Checkpoint confirm/deny buttons
+  // Feature 2: Post-answer feedback buttons (offline only)
   Widget _buildCheckpointButtons(bool isHindi) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.orange.shade50,
-        border: Border(top: BorderSide(color: Colors.orange.shade200)),
+        color: Colors.green.shade50,
+        border: Border(top: BorderSide(color: Colors.green.shade200)),
       ),
       child: Row(
         children: [
           Expanded(
             child: OutlinedButton.icon(
               onPressed: () => _onCheckpointConfirm(false),
-              icon: const Icon(Icons.close, size: 18),
-              label: Text(isHindi ? 'नहीं, बदलें' : 'No, rephrase'),
+              icon: const Icon(Icons.help_outline, size: 18),
+              label: Text(isHindi ? 'और जानें' : 'Need more'),
               style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.red.shade700,
-                side: BorderSide(color: Colors.red.shade300),
+                foregroundColor: Colors.orange.shade700,
+                side: BorderSide(color: Colors.orange.shade300),
               ),
             ),
           ),
@@ -1462,8 +1574,8 @@ For exact figures, check the latest official judicial recruitment notification f
           Expanded(
             child: ElevatedButton.icon(
               onPressed: () => _onCheckpointConfirm(true),
-              icon: const Icon(Icons.check, size: 18),
-              label: Text(isHindi ? 'हां, सही है' : 'Yes, correct'),
+              icon: const Icon(Icons.thumb_up_alt_outlined, size: 18),
+              label: Text(isHindi ? 'उपयोगी था!' : 'Helpful!'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green.shade600,
                 foregroundColor: Colors.white,
@@ -1591,7 +1703,13 @@ For exact figures, check the latest official judicial recruitment notification f
     );
   }
 
-  // ── Rich text (bold support) ──────────────────────────────
+  // ── Rich text (bold + clickable URL support) ─────────────
+
+  static final _urlRegex = RegExp(
+    r'(https?://[^\s,)]+|www\.[^\s,)]+|[a-zA-Z0-9-]+\.[a-z]{2,}(?:/[^\s,)]*)?)',
+    caseSensitive: false,
+  );
+
   Widget _buildRichText(String text, Color baseColor) {
     final lines = text.split('\n');
     return Column(
@@ -1638,18 +1756,18 @@ For exact figures, check the latest official judicial recruitment notification f
         if (trimmed.contains('↓') || trimmed.contains('→')) {
           return Padding(
             padding: const EdgeInsets.only(left: 12, bottom: 1),
-            child: Text(
+            child: _buildClickableText(
               trimmed,
-              style: TextStyle(color: baseColor.withAlpha(180), fontSize: 13),
+              TextStyle(color: baseColor.withAlpha(180), fontSize: 13),
             ),
           );
         }
 
         return Padding(
           padding: const EdgeInsets.only(bottom: 2),
-          child: Text(
+          child: _buildClickableText(
             trimmed,
-            style: TextStyle(fontSize: 14, height: 1.4, color: baseColor),
+            TextStyle(fontSize: 14, height: 1.4, color: baseColor),
           ),
         );
       }).toList(),
@@ -1659,26 +1777,119 @@ For exact figures, check the latest official judicial recruitment notification f
   Widget _buildBoldLine(String text, Color baseColor) {
     final parts = text.split('**');
     if (parts.length <= 1) {
-      return Text(
+      return _buildClickableText(
         text,
-        style: TextStyle(fontSize: 14, height: 1.4, color: baseColor),
+        TextStyle(fontSize: 14, height: 1.4, color: baseColor),
       );
     }
-    return RichText(
-      text: TextSpan(
-        style: TextStyle(fontSize: 14, height: 1.4, color: baseColor),
-        children: parts.asMap().entries.map((entry) {
-          return TextSpan(
-            text: entry.value,
-            style: TextStyle(
-              fontWeight: entry.key % 2 == 1
-                  ? FontWeight.bold
-                  : FontWeight.normal,
+    // Build spans with bold + URL detection
+    final spans = <InlineSpan>[];
+    for (final entry in parts.asMap().entries) {
+      final isBold = entry.key % 2 == 1;
+      final partStyle = TextStyle(
+        fontSize: 14,
+        height: 1.4,
+        color: baseColor,
+        fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+      );
+      final urlMatches = _urlRegex.allMatches(entry.value).toList();
+      if (urlMatches.isEmpty) {
+        spans.add(TextSpan(text: entry.value, style: partStyle));
+      } else {
+        int lastEnd = 0;
+        for (final match in urlMatches) {
+          if (match.start > lastEnd) {
+            spans.add(
+              TextSpan(
+                text: entry.value.substring(lastEnd, match.start),
+                style: partStyle,
+              ),
+            );
+          }
+          final urlText = match.group(0)!;
+          final fullUrl = urlText.startsWith('http')
+              ? urlText
+              : 'https://$urlText';
+          spans.add(
+            WidgetSpan(
+              alignment: PlaceholderAlignment.baseline,
+              baseline: TextBaseline.alphabetic,
+              child: GestureDetector(
+                onTap: () async {
+                  final uri = Uri.parse(fullUrl);
+                  if (await canLaunchUrl(uri)) {
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  }
+                },
+                child: Text(
+                  urlText,
+                  style: partStyle.copyWith(
+                    color: Colors.blue.shade700,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ),
             ),
           );
-        }).toList(),
-      ),
-    );
+          lastEnd = match.end;
+        }
+        if (lastEnd < entry.value.length) {
+          spans.add(
+            TextSpan(text: entry.value.substring(lastEnd), style: partStyle),
+          );
+        }
+      }
+    }
+    return RichText(text: TextSpan(children: spans));
+  }
+
+  /// Renders plain text with auto-detected clickable URLs.
+  Widget _buildClickableText(String text, TextStyle style) {
+    final matches = _urlRegex.allMatches(text).toList();
+    if (matches.isEmpty) {
+      return Text(text, style: style);
+    }
+
+    final spans = <InlineSpan>[];
+    int lastEnd = 0;
+
+    for (final match in matches) {
+      if (match.start > lastEnd) {
+        spans.add(
+          TextSpan(text: text.substring(lastEnd, match.start), style: style),
+        );
+      }
+      final urlText = match.group(0)!;
+      final fullUrl = urlText.startsWith('http') ? urlText : 'https://$urlText';
+      spans.add(
+        WidgetSpan(
+          alignment: PlaceholderAlignment.baseline,
+          baseline: TextBaseline.alphabetic,
+          child: GestureDetector(
+            onTap: () async {
+              final uri = Uri.parse(fullUrl);
+              if (await canLaunchUrl(uri)) {
+                await launchUrl(uri, mode: LaunchMode.externalApplication);
+              }
+            },
+            child: Text(
+              urlText,
+              style: style.copyWith(
+                color: Colors.blue.shade700,
+                decoration: TextDecoration.underline,
+              ),
+            ),
+          ),
+        ),
+      );
+      lastEnd = match.end;
+    }
+
+    if (lastEnd < text.length) {
+      spans.add(TextSpan(text: text.substring(lastEnd), style: style));
+    }
+
+    return RichText(text: TextSpan(children: spans));
   }
 }
 
@@ -1777,6 +1988,11 @@ class _EmbeddedFaqCardState extends State<_EmbeddedFaqCard> {
     );
   }
 
+  static final _faqUrlRegex = RegExp(
+    r'(https?://[^\s,)]+|www\.[^\s,)]+|[a-zA-Z0-9-]+\.[a-z]{2,}(?:/[^\s,)]*)?)',
+    caseSensitive: false,
+  );
+
   Widget _buildAnswer(String answer) {
     final lines = answer.split('\n');
     return Column(
@@ -1822,18 +2038,18 @@ class _EmbeddedFaqCardState extends State<_EmbeddedFaqCard> {
         if (trimmed.contains('↓') || trimmed.contains('→')) {
           return Padding(
             padding: const EdgeInsets.only(left: 12, bottom: 1),
-            child: Text(
+            child: _faqClickableText(
               trimmed,
-              style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+              TextStyle(color: AppTheme.textSecondary, fontSize: 12),
             ),
           );
         }
 
         return Padding(
           padding: const EdgeInsets.only(bottom: 2),
-          child: Text(
+          child: _faqClickableText(
             trimmed,
-            style: const TextStyle(fontSize: 13, height: 1.4),
+            const TextStyle(fontSize: 13, height: 1.4),
           ),
         );
       }).toList(),
@@ -1843,26 +2059,117 @@ class _EmbeddedFaqCardState extends State<_EmbeddedFaqCard> {
   Widget _boldLine(String text) {
     final parts = text.split('**');
     if (parts.length <= 1) {
-      return Text(text, style: const TextStyle(fontSize: 13, height: 1.4));
+      return _faqClickableText(
+        text,
+        const TextStyle(fontSize: 13, height: 1.4),
+      );
     }
-    return RichText(
-      text: TextSpan(
-        style: TextStyle(
-          fontSize: 13,
-          height: 1.4,
-          color: AppTheme.textPrimary,
-        ),
-        children: parts.asMap().entries.map((entry) {
-          return TextSpan(
-            text: entry.value,
-            style: TextStyle(
-              fontWeight: entry.key % 2 == 1
-                  ? FontWeight.bold
-                  : FontWeight.normal,
+    final spans = <InlineSpan>[];
+    for (final entry in parts.asMap().entries) {
+      final isBold = entry.key % 2 == 1;
+      final partStyle = TextStyle(
+        fontSize: 13,
+        height: 1.4,
+        color: AppTheme.textPrimary,
+        fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+      );
+      final urlMatches = _faqUrlRegex.allMatches(entry.value).toList();
+      if (urlMatches.isEmpty) {
+        spans.add(TextSpan(text: entry.value, style: partStyle));
+      } else {
+        int lastEnd = 0;
+        for (final match in urlMatches) {
+          if (match.start > lastEnd) {
+            spans.add(
+              TextSpan(
+                text: entry.value.substring(lastEnd, match.start),
+                style: partStyle,
+              ),
+            );
+          }
+          final urlText = match.group(0)!;
+          final fullUrl = urlText.startsWith('http')
+              ? urlText
+              : 'https://$urlText';
+          spans.add(
+            WidgetSpan(
+              alignment: PlaceholderAlignment.baseline,
+              baseline: TextBaseline.alphabetic,
+              child: GestureDetector(
+                onTap: () async {
+                  final uri = Uri.parse(fullUrl);
+                  if (await canLaunchUrl(uri)) {
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  }
+                },
+                child: Text(
+                  urlText,
+                  style: partStyle.copyWith(
+                    color: Colors.blue.shade700,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ),
             ),
           );
-        }).toList(),
-      ),
-    );
+          lastEnd = match.end;
+        }
+        if (lastEnd < entry.value.length) {
+          spans.add(
+            TextSpan(text: entry.value.substring(lastEnd), style: partStyle),
+          );
+        }
+      }
+    }
+    return RichText(text: TextSpan(children: spans));
+  }
+
+  /// Renders text with auto-detected clickable URLs.
+  Widget _faqClickableText(String text, TextStyle style) {
+    final matches = _faqUrlRegex.allMatches(text).toList();
+    if (matches.isEmpty) {
+      return Text(text, style: style);
+    }
+
+    final spans = <InlineSpan>[];
+    int lastEnd = 0;
+
+    for (final match in matches) {
+      if (match.start > lastEnd) {
+        spans.add(
+          TextSpan(text: text.substring(lastEnd, match.start), style: style),
+        );
+      }
+      final urlText = match.group(0)!;
+      final fullUrl = urlText.startsWith('http') ? urlText : 'https://$urlText';
+      spans.add(
+        WidgetSpan(
+          alignment: PlaceholderAlignment.baseline,
+          baseline: TextBaseline.alphabetic,
+          child: GestureDetector(
+            onTap: () async {
+              final uri = Uri.parse(fullUrl);
+              if (await canLaunchUrl(uri)) {
+                await launchUrl(uri, mode: LaunchMode.externalApplication);
+              }
+            },
+            child: Text(
+              urlText,
+              style: style.copyWith(
+                color: Colors.blue.shade700,
+                decoration: TextDecoration.underline,
+              ),
+            ),
+          ),
+        ),
+      );
+      lastEnd = match.end;
+    }
+
+    if (lastEnd < text.length) {
+      spans.add(TextSpan(text: text.substring(lastEnd), style: style));
+    }
+
+    return RichText(text: TextSpan(children: spans));
   }
 }

@@ -86,6 +86,152 @@ class RoadmapScreen extends StatelessWidget {
                     ),
                   ).animate().fadeIn().slideY(begin: -0.1, end: 0),
 
+                  const SizedBox(height: 16),
+
+                  // Progress Tracking Card
+                  Builder(
+                    builder: (context) {
+                      final totalSteps = roadmap.steps.length;
+                      final completedCount = roadmap.steps
+                          .where(
+                            (s) => userProvider.isStepCompleted(
+                              roadmap.steps.indexOf(s) + 1,
+                            ),
+                          )
+                          .length;
+                      final progress = totalSteps > 0
+                          ? completedCount / totalSteps
+                          : 0.0;
+                      final percent = (progress * 100).toInt();
+
+                      String motivationText;
+                      String motivationEmoji;
+                      if (completedCount == 0) {
+                        motivationEmoji = '🚀';
+                        motivationText = isHindi
+                            ? 'अपनी यात्रा शुरू करें! पहला कदम पूरा करें।'
+                            : 'Start your journey! Complete your first step.';
+                      } else if (completedCount < totalSteps ~/ 2) {
+                        motivationEmoji = '💪';
+                        motivationText = isHindi
+                            ? 'बढ़िया शुरुआत! आप सही रास्ते पर हैं।'
+                            : 'Great start! You are on the right track.';
+                      } else if (completedCount < totalSteps) {
+                        motivationEmoji = '🔥';
+                        motivationText = isHindi
+                            ? 'शानदार प्रगति! आप लक्ष्य के करीब हैं!'
+                            : 'Amazing progress! You are close to the goal!';
+                      } else {
+                        motivationEmoji = '🏆';
+                        motivationText = isHindi
+                            ? 'बधाई! आपने सभी चरण पूरे कर लिए हैं!'
+                            : 'Congratulations! You have completed all steps!';
+                      }
+
+                      return Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.grey.shade200),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withAlpha(12),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.trending_up_rounded,
+                                  color: AppTheme.primaryColor,
+                                  size: 22,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  isHindi ? 'आपकी प्रगति' : 'Your Progress',
+                                  style: Theme.of(context).textTheme.titleSmall
+                                      ?.copyWith(fontWeight: FontWeight.bold),
+                                ),
+                                const Spacer(),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.primaryColor.withAlpha(25),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    '$completedCount / $totalSteps',
+                                    style: TextStyle(
+                                      color: AppTheme.primaryColor,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(6),
+                              child: LinearProgressIndicator(
+                                value: progress,
+                                minHeight: 10,
+                                backgroundColor: Colors.grey.shade200,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  completedCount == totalSteps
+                                      ? AppTheme.successColor
+                                      : AppTheme.primaryColor,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: Text(
+                                '$percent%',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.textSecondary,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Text(
+                                  motivationEmoji,
+                                  style: const TextStyle(fontSize: 18),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    motivationText,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: AppTheme.textSecondary,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ).animate(delay: 50.ms).fadeIn(),
+
                   const SizedBox(height: 24),
 
                   // Entrance Exams
@@ -250,13 +396,26 @@ class RoadmapScreen extends StatelessWidget {
                                         );
                                       }
                                     },
-                                    child: Text(
-                                      criteria.sourceUrl,
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        color: Colors.blue.shade700,
-                                        decoration: TextDecoration.underline,
-                                      ),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.open_in_new,
+                                          size: 12,
+                                          color: Colors.blue.shade700,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Expanded(
+                                          child: Text(
+                                            criteria.sourceUrl,
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              color: Colors.blue.shade700,
+                                              decoration:
+                                                  TextDecoration.underline,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                   const SizedBox(height: 4),
@@ -330,12 +489,18 @@ class RoadmapScreen extends StatelessWidget {
                     final index = entry.key;
                     final step = entry.value;
                     final isLast = index == roadmap.steps.length - 1;
+                    final stepNum = index + 1;
+                    final completed = userProvider.isStepCompleted(stepNum);
 
                     return _TimelineStep(
                           step: step,
                           isLast: isLast,
-                          stepNumber: index + 1,
+                          stepNumber: stepNum,
                           isHindi: isHindi,
+                          isCompleted: completed,
+                          onToggleComplete: () {
+                            userProvider.toggleStepCompletion(stepNum);
+                          },
                         )
                         .animate(
                           delay: Duration(milliseconds: 250 + (index * 100)),
@@ -347,46 +512,72 @@ class RoadmapScreen extends StatelessWidget {
                   const SizedBox(height: 24),
 
                   // Motivation Card
-                  Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: AppTheme.successColor.withAlpha(25),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: AppTheme.successColor.withAlpha(50),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            const Text('💪', style: TextStyle(fontSize: 32)),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    isHindi ? 'याद रखें' : 'Remember',
-                                    style: TextStyle(
-                                      color: AppTheme.successColor,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    isHindi
-                                        ? 'हर साल हजारों छात्र न्यायाधीश बनते हैं। आप भी बन सकते हैं!'
-                                        : 'Thousands of students become judges every year. You can too!',
-                                    style: TextStyle(
-                                      color: AppTheme.textSecondary,
-                                    ),
-                                  ),
-                                ],
+                  Builder(
+                        builder: (context) {
+                          final totalSteps = roadmap.steps.length;
+                          final completedCount = roadmap.steps
+                              .where(
+                                (s) => userProvider.isStepCompleted(
+                                  roadmap.steps.indexOf(s) + 1,
+                                ),
+                              )
+                              .length;
+                          final remaining = totalSteps - completedCount;
+
+                          return Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: AppTheme.successColor.withAlpha(25),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: AppTheme.successColor.withAlpha(50),
                               ),
                             ),
-                          ],
-                        ),
+                            child: Row(
+                              children: [
+                                Text(
+                                  completedCount == totalSteps ? '🏆' : '💪',
+                                  style: const TextStyle(fontSize: 32),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        isHindi ? 'याद रखें' : 'Remember',
+                                        style: TextStyle(
+                                          color: AppTheme.successColor,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        completedCount == 0
+                                            ? (isHindi
+                                                  ? 'हर साल हजारों छात्र न्यायाधीश बनते हैं। आप भी बन सकते हैं!'
+                                                  : 'Thousands of students become judges every year. You can too!')
+                                            : completedCount == totalSteps
+                                            ? (isHindi
+                                                  ? '🎉 आपने सभी चरण पूरे कर लिए हैं! अब अपने सपने को साकार करें!'
+                                                  : '🎉 You completed all steps! Now make your dream a reality!')
+                                            : (isHindi
+                                                  ? 'आपने $completedCount चरण पूरे किए! बस $remaining और बाकी हैं। जारी रखें!'
+                                                  : 'You completed $completedCount steps! Just $remaining more to go. Keep going!'),
+                                        style: TextStyle(
+                                          color: AppTheme.textSecondary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
                       )
                       .animate(delay: 600.ms)
                       .fadeIn()
@@ -466,12 +657,16 @@ class _TimelineStep extends StatelessWidget {
   final bool isLast;
   final int stepNumber;
   final bool isHindi;
+  final bool isCompleted;
+  final VoidCallback onToggleComplete;
 
   const _TimelineStep({
     required this.step,
     required this.isLast,
     required this.stepNumber,
     required this.isHindi,
+    required this.isCompleted,
+    required this.onToggleComplete,
   });
 
   @override
@@ -483,32 +678,46 @@ class _TimelineStep extends StatelessWidget {
           // Timeline indicator
           Column(
             children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: step.isCompleted
-                      ? AppTheme.successColor
-                      : AppTheme.primaryColor,
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: step.isCompleted
-                      ? const Icon(Icons.check, color: Colors.white, size: 20)
-                      : Text(
-                          '$stepNumber',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
+              GestureDetector(
+                onTap: onToggleComplete,
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: isCompleted
+                        ? AppTheme.successColor
+                        : AppTheme.primaryColor,
+                    shape: BoxShape.circle,
+                    boxShadow: isCompleted
+                        ? [
+                            BoxShadow(
+                              color: AppTheme.successColor.withAlpha(80),
+                              blurRadius: 8,
+                              spreadRadius: 1,
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: Center(
+                    child: isCompleted
+                        ? const Icon(Icons.check, color: Colors.white, size: 20)
+                        : Text(
+                            '$stepNumber',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
+                  ),
                 ),
               ),
               if (!isLast)
                 Expanded(
                   child: Container(
                     width: 3,
-                    color: AppTheme.primaryColor.withAlpha(50),
+                    color: isCompleted
+                        ? AppTheme.successColor.withAlpha(120)
+                        : AppTheme.primaryColor.withAlpha(50),
                   ),
                 ),
             ],
@@ -520,9 +729,15 @@ class _TimelineStep extends StatelessWidget {
               margin: EdgeInsets.only(bottom: isLast ? 0 : 20),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isCompleted
+                    ? AppTheme.successColor.withAlpha(15)
+                    : Colors.white,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade200),
+                border: Border.all(
+                  color: isCompleted
+                      ? AppTheme.successColor.withAlpha(60)
+                      : Colors.grey.shade200,
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -534,7 +749,12 @@ class _TimelineStep extends StatelessWidget {
                         child: Text(
                           step.getTitle(isHindi ? 'hi' : 'en'),
                           style: Theme.of(context).textTheme.titleSmall
-                              ?.copyWith(fontWeight: FontWeight.bold),
+                              ?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                decoration: isCompleted
+                                    ? TextDecoration.lineThrough
+                                    : null,
+                              ),
                         ),
                       ),
                       Container(
@@ -582,12 +802,18 @@ class _TimelineStep extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 8),
                                 Expanded(
-                                  child: Text(
+                                  child: _buildClickableText(
                                     detail,
-                                    style: Theme.of(context).textTheme.bodySmall
-                                        ?.copyWith(
+                                    Theme.of(
+                                          context,
+                                        ).textTheme.bodySmall?.copyWith(
                                           color: AppTheme.textSecondary,
                                           height: 1.4,
+                                        ) ??
+                                        const TextStyle(
+                                          color: AppTheme.textSecondary,
+                                          height: 1.4,
+                                          fontSize: 12,
                                         ),
                                   ),
                                 ),
@@ -596,6 +822,50 @@ class _TimelineStep extends StatelessWidget {
                           ),
                         ),
                   ],
+                  const SizedBox(height: 10),
+                  // Mark complete / undo button
+                  GestureDetector(
+                    onTap: onToggleComplete,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isCompleted
+                            ? AppTheme.successColor.withAlpha(25)
+                            : AppTheme.primaryColor.withAlpha(20),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            isCompleted
+                                ? Icons.replay_rounded
+                                : Icons.check_circle_outline,
+                            size: 16,
+                            color: isCompleted
+                                ? AppTheme.successColor
+                                : AppTheme.primaryColor,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            isCompleted
+                                ? (isHindi ? 'पूर्ववत करें' : 'Undo')
+                                : (isHindi ? 'पूरा हुआ ✓' : 'Mark Complete ✓'),
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: isCompleted
+                                  ? AppTheme.successColor
+                                  : AppTheme.primaryColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -603,6 +873,60 @@ class _TimelineStep extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  /// Detects URLs in [text] and renders them as tappable blue links.
+  Widget _buildClickableText(String text, TextStyle style) {
+    final urlRegex = RegExp(
+      r'(https?://[^\s,)]+|www\.[^\s,)]+|[a-zA-Z0-9-]+\.[a-z]{2,}(?:/[^\s,)]*)?)',
+      caseSensitive: false,
+    );
+
+    final matches = urlRegex.allMatches(text).toList();
+    if (matches.isEmpty) {
+      return Text(text, style: style);
+    }
+
+    final spans = <InlineSpan>[];
+    int lastEnd = 0;
+
+    for (final match in matches) {
+      if (match.start > lastEnd) {
+        spans.add(
+          TextSpan(text: text.substring(lastEnd, match.start), style: style),
+        );
+      }
+      final urlText = match.group(0)!;
+      final fullUrl = urlText.startsWith('http') ? urlText : 'https://$urlText';
+      spans.add(
+        WidgetSpan(
+          alignment: PlaceholderAlignment.baseline,
+          baseline: TextBaseline.alphabetic,
+          child: GestureDetector(
+            onTap: () async {
+              final uri = Uri.parse(fullUrl);
+              if (await canLaunchUrl(uri)) {
+                await launchUrl(uri, mode: LaunchMode.externalApplication);
+              }
+            },
+            child: Text(
+              urlText,
+              style: style.copyWith(
+                color: Colors.blue.shade700,
+                decoration: TextDecoration.underline,
+              ),
+            ),
+          ),
+        ),
+      );
+      lastEnd = match.end;
+    }
+
+    if (lastEnd < text.length) {
+      spans.add(TextSpan(text: text.substring(lastEnd), style: style));
+    }
+
+    return RichText(text: TextSpan(children: spans));
   }
 }
 

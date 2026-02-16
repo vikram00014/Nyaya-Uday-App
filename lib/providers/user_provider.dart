@@ -15,11 +15,20 @@ class UserProvider extends ChangeNotifier {
   // User profile fields (local only - no cloud auth)
   String? _displayName;
 
+  // Roadmap step completion tracking
+  Set<int> _completedSteps = {};
+
+  // Study streak tracking
+  int _streakDays = 0;
+  String? _lastActiveDate;
+
   UserModel? get user => _user;
   bool get isLoading => _isLoading;
   bool get isOnboarded => _isOnboarded;
 
   String? get displayName => _displayName;
+  Set<int> get completedSteps => _completedSteps;
+  int get streakDays => _streakDays;
 
   // Initialize from local storage
   Future<void> initialize() async {
@@ -29,6 +38,13 @@ class UserProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     _isOnboarded = prefs.getBool('is_onboarded') ?? false;
     _displayName = prefs.getString('user_display_name');
+    final savedSteps = prefs.getStringList('completed_roadmap_steps') ?? [];
+    _completedSteps = savedSteps.map(int.parse).toSet();
+
+    // Load streak data
+    _streakDays = prefs.getInt('streak_days') ?? 0;
+    _lastActiveDate = prefs.getString('last_active_date');
+    await _updateStreak(prefs);
 
     if (_isOnboarded) {
       final savedScore = prefs.getInt('total_score') ?? 0;
@@ -51,6 +67,11 @@ class UserProvider extends ChangeNotifier {
         casesCompleted: prefs.getInt('cases_completed') ?? 0,
         badges: normalizedBadges,
         rank: normalizedRank,
+        age: prefs.getInt('user_age'),
+        category: prefs.getString('user_category'),
+        gender: prefs.getString('user_gender'),
+        annualIncome: prefs.getDouble('user_annual_income'),
+        hasDisability: prefs.getBool('user_has_disability'),
       );
     }
 
@@ -73,6 +94,11 @@ class UserProvider extends ChangeNotifier {
     required String state,
     required String educationLevel,
     String preferredLanguage = 'en',
+    int? age,
+    String? category,
+    String? gender,
+    double? annualIncome,
+    bool? hasDisability,
   }) async {
     _isLoading = true;
     notifyListeners();
@@ -86,11 +112,25 @@ class UserProvider extends ChangeNotifier {
     await prefs.setInt('cases_completed', 0);
     await prefs.setStringList('badges', []);
     await prefs.setString('rank', 'Trainee');
+    if (age != null) await prefs.setInt('user_age', age);
+    if (category != null) await prefs.setString('user_category', category);
+    if (gender != null) await prefs.setString('user_gender', gender);
+    if (annualIncome != null) {
+      await prefs.setDouble('user_annual_income', annualIncome);
+    }
+    if (hasDisability != null) {
+      await prefs.setBool('user_has_disability', hasDisability);
+    }
 
     _user = UserModel(
       state: state,
       educationLevel: educationLevel,
       preferredLanguage: preferredLanguage,
+      age: age,
+      category: category,
+      gender: gender,
+      annualIncome: annualIncome,
+      hasDisability: hasDisability,
     );
     _isOnboarded = true;
 
@@ -173,6 +213,83 @@ class UserProvider extends ChangeNotifier {
     await prefs.setString('preferred_language', language);
 
     notifyListeners();
+  }
+
+  /// Update any combination of profile fields at runtime.
+  Future<void> updateProfile({
+    String? state,
+    String? educationLevel,
+    int? age,
+    String? category,
+    String? gender,
+    double? annualIncome,
+    bool? hasDisability,
+  }) async {
+    if (_user == null) return;
+
+    final prefs = await SharedPreferences.getInstance();
+
+    if (state != null) {
+      await prefs.setString('user_state', state);
+    }
+    if (educationLevel != null) {
+      await prefs.setString('user_education', educationLevel);
+    }
+    if (age != null) {
+      await prefs.setInt('user_age', age);
+    }
+    if (category != null) {
+      await prefs.setString('user_category', category);
+    }
+    if (gender != null) {
+      await prefs.setString('user_gender', gender);
+    }
+    if (annualIncome != null) {
+      await prefs.setDouble('user_annual_income', annualIncome);
+    }
+    if (hasDisability != null) {
+      await prefs.setBool('user_has_disability', hasDisability);
+    }
+
+    _user = _user!.copyWith(
+      state: state,
+      educationLevel: educationLevel,
+      age: age,
+      category: category,
+      gender: gender,
+      annualIncome: annualIncome,
+      hasDisability: hasDisability,
+    );
+
+    notifyListeners();
+  }
+
+  // ── Roadmap step progress ──────────────────────────────────
+  bool isStepCompleted(int stepOrder) => _completedSteps.contains(stepOrder);
+
+  Future<void> toggleStepCompletion(int stepOrder) async {
+    if (_completedSteps.contains(stepOrder)) {
+      _completedSteps.remove(stepOrder);
+    } else {
+      _completedSteps.add(stepOrder);
+    }
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(
+      'completed_roadmap_steps',
+      _completedSteps.map((e) => e.toString()).toList(),
+    );
+    notifyListeners();
+  }
+
+  int get totalRoadmapSteps {
+    final roadmap = getRoadmap();
+    return roadmap?.steps.length ?? 0;
+  }
+
+  double get roadmapProgress {
+    final total = totalRoadmapSteps;
+    if (total == 0) return 0;
+    return _completedSteps.length / total;
   }
 
   // Get badge display info
@@ -267,5 +384,45 @@ class UserProvider extends ChangeNotifier {
       if (a[i] != b[i]) return false;
     }
     return true;
+  }
+
+  // ── Study Streak ──────────────────────────────────────────
+
+  /// Returns today's date as yyyy-MM-dd string.
+  static String _todayString() {
+    final now = DateTime.now();
+    return '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+  }
+
+  /// Called on app launch to update the streak.
+  Future<void> _updateStreak(SharedPreferences prefs) async {
+    final today = _todayString();
+
+    if (_lastActiveDate == null) {
+      // First ever launch
+      _streakDays = 1;
+      _lastActiveDate = today;
+    } else if (_lastActiveDate == today) {
+      // Already opened today — no change
+      return;
+    } else {
+      // Check if yesterday
+      final lastDate = DateTime.tryParse(_lastActiveDate!);
+      final todayDate = DateTime.tryParse(today);
+      if (lastDate != null && todayDate != null) {
+        final diff = todayDate.difference(lastDate).inDays;
+        if (diff == 1) {
+          _streakDays += 1; // consecutive day
+        } else {
+          _streakDays = 1; // streak broken
+        }
+      } else {
+        _streakDays = 1;
+      }
+      _lastActiveDate = today;
+    }
+
+    await prefs.setInt('streak_days', _streakDays);
+    await prefs.setString('last_active_date', _lastActiveDate!);
   }
 }

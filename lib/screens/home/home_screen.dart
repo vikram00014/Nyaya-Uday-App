@@ -9,9 +9,11 @@ import '../../providers/locale_provider.dart';
 import '../roadmap/roadmap_screen.dart';
 import '../simulation/case_list_screen.dart';
 import '../learn/legal_modules_screen.dart';
+import '../learn/legal_glossary_screen.dart';
 import '../profile/profile_screen.dart';
 import '../leaderboard/leaderboard_screen.dart';
 import '../assistant/faq_assistant_screen.dart';
+import '../notes/notes_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -52,7 +54,10 @@ class _HomeScreenState extends State<HomeScreen> {
         icon: const Icon(Icons.support_agent, color: Colors.white),
         label: Text(
           isHindi ? 'सहायक' : 'Ask',
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       bottomNavigationBar: Container(
@@ -108,10 +113,7 @@ class _HomeContent extends StatelessWidget {
   final UserProvider userProvider;
   final bool isHindi;
 
-  const _HomeContent({
-    required this.userProvider,
-    required this.isHindi,
-  });
+  const _HomeContent({required this.userProvider, required this.isHindi});
 
   @override
   Widget build(BuildContext context) {
@@ -132,17 +134,22 @@ class _HomeContent extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      isHindi ? 'नमस्ते! 🙏' : 'Namaste! 🙏',
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      isHindi
+                          ? 'नमस्ते${userProvider.displayName != null ? ', ${userProvider.displayName}' : ''}! 🙏'
+                          : 'Namaste${userProvider.displayName != null ? ', ${userProvider.displayName}' : ''}! 🙏',
+                      style: Theme.of(context).textTheme.headlineMedium
+                          ?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: AppTheme.primaryColor,
                           ),
                     ),
                     Text(
-                      isHindi ? 'आपकी न्यायिक यात्रा जारी है' : 'Your judicial journey continues',
+                      isHindi
+                          ? 'आपकी न्यायिक यात्रा जारी है'
+                          : 'Your judicial journey continues',
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: AppTheme.textSecondary,
-                          ),
+                        color: AppTheme.textSecondary,
+                      ),
                     ),
                   ],
                 ),
@@ -223,14 +230,28 @@ class _HomeContent extends StatelessWidget {
               ),
             ).animate(delay: 200.ms).fadeIn().slideY(begin: 0.1, end: 0),
 
+            const SizedBox(height: 16),
+
+            // Study Streak + Daily Tip
+            _StudyStreakCard(
+              streakDays: userProvider.streakDays,
+              isHindi: isHindi,
+            ).animate(delay: 250.ms).fadeIn().slideY(begin: 0.1, end: 0),
+
+            const SizedBox(height: 16),
+
+            _DailyTipCard(
+              isHindi: isHindi,
+            ).animate(delay: 280.ms).fadeIn().slideY(begin: 0.1, end: 0),
+
             const SizedBox(height: 24),
 
             // Quick Actions
             Text(
               isHindi ? 'तेज़ कार्रवाई' : 'Quick Actions',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ).animate(delay: 300.ms).fadeIn(),
 
             const SizedBox(height: 16),
@@ -246,7 +267,9 @@ class _HomeContent extends StatelessWidget {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const RoadmapScreen()),
+                        MaterialPageRoute(
+                          builder: (_) => const RoadmapScreen(),
+                        ),
                       );
                     },
                   ),
@@ -261,7 +284,9 @@ class _HomeContent extends StatelessWidget {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const CaseListScreen()),
+                        MaterialPageRoute(
+                          builder: (_) => const CaseListScreen(),
+                        ),
                       );
                     },
                   ),
@@ -282,7 +307,9 @@ class _HomeContent extends StatelessWidget {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const LegalModulesScreen()),
+                        MaterialPageRoute(
+                          builder: (_) => const LegalModulesScreen(),
+                        ),
                       );
                     },
                   ),
@@ -297,13 +324,78 @@ class _HomeContent extends StatelessWidget {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const LeaderboardScreen()),
+                        MaterialPageRoute(
+                          builder: (_) => const LeaderboardScreen(),
+                        ),
                       );
                     },
                   ),
                 ),
               ],
             ).animate(delay: 500.ms).fadeIn().slideY(begin: 0.1, end: 0),
+
+            const SizedBox(height: 16),
+
+            Row(
+              children: [
+                Expanded(
+                  child: _QuickActionCard(
+                    icon: '📝',
+                    title: isHindi ? 'मेरे नोट्स' : 'My Notes',
+                    subtitle: isHindi ? 'नोट्स लिखें' : 'Write notes',
+                    color: Colors.indigo,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const NotesScreen()),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _QuickActionCard(
+                    icon: '📖',
+                    title: isHindi ? 'कानूनी शब्दकोश' : 'Glossary',
+                    subtitle: isHindi ? 'शब्द खोजें' : 'Legal terms',
+                    color: Colors.brown,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const LegalGlossaryScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ).animate(delay: 550.ms).fadeIn().slideY(begin: 0.1, end: 0),
+
+            const SizedBox(height: 16),
+
+            Row(
+              children: [
+                Expanded(
+                  child: _QuickActionCard(
+                    icon: '🤖',
+                    title: isHindi ? 'AI सहायक' : 'AI Assistant',
+                    subtitle: isHindi ? 'प्रश्न पूछें' : 'Ask questions',
+                    color: Colors.deepPurple,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const FaqAssistantScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(width: 16),
+                const Expanded(child: SizedBox()), // half-width placeholder
+              ],
+            ).animate(delay: 600.ms).fadeIn().slideY(begin: 0.1, end: 0),
 
             const SizedBox(height: 24),
 
@@ -314,7 +406,14 @@ class _HomeContent extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.shade200),
+                border: Border.all(color: AppTheme.primaryColor.withAlpha(30)),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.primaryColor.withAlpha(12),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -336,9 +435,8 @@ class _HomeContent extends StatelessWidget {
                       Expanded(
                         child: Text(
                           l10n.whatIsJudge,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                       ),
                     ],
@@ -347,19 +445,379 @@ class _HomeContent extends StatelessWidget {
                   Text(
                     l10n.judgeRole,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppTheme.textSecondary,
-                          height: 1.5,
-                        ),
+                      color: AppTheme.textSecondary,
+                      height: 1.5,
+                    ),
                   ),
                 ],
               ),
-            ).animate(delay: 600.ms).fadeIn().slideY(begin: 0.1, end: 0),
+            ).animate(delay: 650.ms).fadeIn().slideY(begin: 0.1, end: 0),
 
             const SizedBox(height: 20),
           ],
         ),
       ),
     );
+  }
+}
+
+// ── Study Streak Card ───────────────────────────────────────
+class _StudyStreakCard extends StatelessWidget {
+  final int streakDays;
+  final bool isHindi;
+
+  const _StudyStreakCard({required this.streakDays, required this.isHindi});
+
+  String get _streakEmoji {
+    if (streakDays >= 30) return '🏆';
+    if (streakDays >= 14) return '🔥';
+    if (streakDays >= 7) return '⭐';
+    if (streakDays >= 3) return '🌟';
+    return '✨';
+  }
+
+  String _motivationalText() {
+    if (isHindi) {
+      if (streakDays >= 30) {
+        return 'अद्भुत! एक महीने से ज़्यादा! जज बनने का सपना पूरा होगा!';
+      }
+      if (streakDays >= 14) {
+        return 'शानदार! दो सप्ताह की लगन! आप सही राह पर हैं!';
+      }
+      if (streakDays >= 7) return 'बहुत अच्छा! एक हफ्ते की स्ट्रीक! जारी रखें!';
+      if (streakDays >= 3) return 'अच्छी शुरुआत! हर दिन मायने रखता है!';
+      return 'आज की शुरुआत बढ़िया है! कल भी आएं!';
+    }
+    if (streakDays >= 30) {
+      return 'Amazing! 30+ days! Your dedication will pay off!';
+    }
+    if (streakDays >= 14) {
+      return 'Brilliant! 2 weeks strong! You\'re on the right path!';
+    }
+    if (streakDays >= 7) return 'Great! 1 week streak! Keep going!';
+    if (streakDays >= 3) return 'Good start! Every day counts!';
+    return 'Today is a great start! Come back tomorrow!';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.orange.shade600, Colors.deepOrange.shade400],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.orange.withAlpha(50),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Text(_streakEmoji, style: const TextStyle(fontSize: 32)),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isHindi
+                      ? '$streakDays दिन की स्ट्रीक!'
+                      : '$streakDays Day Streak!',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  _motivationalText(),
+                  style: TextStyle(
+                    color: Colors.white.withAlpha(220),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Flame icons for visual streak
+          Column(
+            children: List.generate(
+              (streakDays).clamp(0, 5),
+              (i) => const Text('🔥', style: TextStyle(fontSize: 14)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Daily Tip Card ──────────────────────────────────────────
+class _DailyTipCard extends StatelessWidget {
+  final bool isHindi;
+
+  const _DailyTipCard({required this.isHindi});
+
+  @override
+  Widget build(BuildContext context) {
+    final tips = _getDailyTips();
+    // Pick tip based on day of year so it rotates daily
+    final dayOfYear = DateTime.now()
+        .difference(DateTime(DateTime.now().year))
+        .inDays;
+    final tip = tips[dayOfYear % tips.length];
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.accentColor.withAlpha(40)),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.accentColor.withAlpha(15),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: AppTheme.accentColor.withAlpha(30),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Center(
+              child: Text('💡', style: TextStyle(fontSize: 22)),
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isHindi ? 'आज का कानूनी ज्ञान' : 'Legal Tip of the Day',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: AppTheme.accentDark,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  isHindi ? tip['hi']! : tip['en']!,
+                  style: TextStyle(
+                    fontSize: 13,
+                    height: 1.5,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<Map<String, String>> _getDailyTips() {
+    return [
+      {
+        'en':
+            'Article 21 of the Constitution guarantees the Right to Life and Personal Liberty — the most expansive fundamental right.',
+        'hi':
+            'संविधान का अनुच्छेद 21 जीवन और व्यक्तिगत स्वतंत्रता का अधिकार सुनिश्चित करता है — सबसे व्यापक मौलिक अधिकार।',
+      },
+      {
+        'en':
+            'The Supreme Court of India was established on 26 January 1950. It replaced the Federal Court of India and the Privy Council.',
+        'hi':
+            'भारत का सर्वोच्च न्यायालय 26 जनवरी 1950 को स्थापित हुआ। इसने फेडरल कोर्ट और प्रिवी काउंसिल का स्थान लिया।',
+      },
+      {
+        'en':
+            'A Civil Judge (Junior Division) is the entry-level judicial post. The exam is conducted by the respective State High Court.',
+        'hi':
+            'सिविल जज (कनिष्ठ खंड) प्रवेश स्तर का न्यायिक पद है। परीक्षा संबंधित राज्य उच्च न्यायालय द्वारा आयोजित होती है।',
+      },
+      {
+        'en':
+            'FIR (First Information Report) can be filed by any person. Police must register it for cognizable offences — refusal is an offence.',
+        'hi':
+            'FIR कोई भी व्यक्ति दर्ज करा सकता है। संज्ञेय अपराधों के लिए पुलिस को इसे दर्ज करना अनिवार्य है — मना करना अपराध है।',
+      },
+      {
+        'en':
+            'The Kesavananda Bharati case (1973) established the Basic Structure Doctrine — Parliament cannot alter the basic structure of the Constitution.',
+        'hi':
+            'केशवानंद भारती केस (1973) ने मूल संरचना सिद्धांत स्थापित किया — संसद संविधान की मूल संरचना नहीं बदल सकती।',
+      },
+      {
+        'en':
+            'India has 25 High Courts. The oldest is the Calcutta High Court, established in 1862.',
+        'hi':
+            'भारत में 25 उच्च न्यायालय हैं। सबसे पुराना कलकत्ता उच्च न्यायालय है, जो 1862 में स्थापित हुआ।',
+      },
+      {
+        'en':
+            'Lok Adalat decisions are final and binding. No appeal lies against them. There is no court fee in Lok Adalat.',
+        'hi':
+            'लोक अदालत के निर्णय अंतिम और बाध्यकारी होते हैं। कोई अपील नहीं। कोई कोर्ट फीस भी नहीं लगती।',
+      },
+      {
+        'en':
+            'BNS (Bharatiya Nyaya Sanhita) replaced the 164-year-old IPC on 1 July 2024 with 358 modern sections.',
+        'hi':
+            'भारतीय न्याय संहिता (BNS) ने 1 जुलाई 2024 को 164 साल पुरानी IPC को 358 आधुनिक धाराओं से बदल दिया।',
+      },
+      {
+        'en':
+            'Free legal aid is a fundamental right under Article 39A. SC/ST, women, children, and disabled persons are eligible regardless of income.',
+        'hi':
+            'मुफ्त कानूनी सहायता अनुच्छेद 39A के तहत मौलिक अधिकार है। SC/ST, महिला, बच्चे और दिव्यांग बिना आय सीमा के पात्र हैं।',
+      },
+      {
+        'en':
+            'The Vishaka Guidelines (1997) were India\'s first rules against sexual harassment at the workplace, later codified as the POSH Act 2013.',
+        'hi':
+            'विशाखा दिशानिर्देश (1997) कार्यस्थल पर यौन उत्पीड़न के विरुद्ध भारत के पहले नियम थे, बाद में POSH अधिनियम 2013 बना।',
+      },
+      {
+        'en':
+            'CLAT (Common Law Admission Test) is the gateway to 22 National Law Universities. Graduates can take the CLAT-PG for LLM admission.',
+        'hi':
+            'CLAT 22 राष्ट्रीय विधि विश्वविद्यालयों का प्रवेश द्वार है। स्नातक CLAT-PG से LLM में प्रवेश ले सकते हैं।',
+      },
+      {
+        'en':
+            'A PIL (Public Interest Litigation) can be filed by any citizen to protect public interest — no personal stake is required.',
+        'hi':
+            'PIL (जनहित याचिका) कोई भी नागरिक जनहित में दायर कर सकता है — व्यक्तिगत हित की ज़रूरत नहीं।',
+      },
+      {
+        'en':
+            'The Preamble declares India a "Sovereign, Socialist, Secular, Democratic Republic." "Socialist" and "Secular" were added by the 42nd Amendment (1976).',
+        'hi':
+            'प्रस्तावना भारत को "संप्रभु, समाजवादी, धर्मनिरपेक्ष, लोकतांत्रिक गणराज्य" घोषित करती है। 42वें संशोधन (1976) से ये शब्द जोड़े गए।',
+      },
+      {
+        'en':
+            'Habeas Corpus ("produce the body") is the most powerful writ — it protects personal liberty against illegal detention.',
+        'hi':
+            'हैबियस कॉर्पस ("शरीर प्रस्तुत करो") सबसे शक्तिशाली रिट है — यह गैरकानूनी हिरासत से व्यक्तिगत स्वतंत्रता की रक्षा करती है।',
+      },
+      {
+        'en':
+            'The Right to Privacy was declared a fundamental right under Article 21 by the Supreme Court in the Puttaswamy case (2017).',
+        'hi':
+            'सर्वोच्च न्यायालय ने पुट्टस्वामी केस (2017) में निजता के अधिकार को अनुच्छेद 21 के तहत मौलिक अधिकार घोषित किया।',
+      },
+      {
+        'en':
+            'DK Basu Guidelines (1997) mandate every arrested person be informed of grounds of arrest and access to a lawyer — enforced as law.',
+        'hi':
+            'DK बसु दिशानिर्देश (1997) — हर गिरफ्तार व्यक्ति को गिरफ्तारी का कारण बताना और वकील तक पहुंच देना अनिवार्य।',
+      },
+      {
+        'en':
+            'NALSA helps over 1 crore people annually through legal aid. Helpline: 15100. Email: nalsa-dla@nic.in.',
+        'hi':
+            'NALSA सालाना 1 करोड़+ लोगों की कानूनी सहायता करता है। हेल्पलाइन: 15100। ईमेल: nalsa-dla@nic.in।',
+      },
+      {
+        'en':
+            'The Right to Education Act 2009 (Article 21A) guarantees free and compulsory education for children aged 6-14 years.',
+        'hi':
+            'शिक्षा का अधिकार अधिनियम 2009 (अनुच्छेद 21A) 6-14 वर्ष के बच्चों को मुफ्त और अनिवार्य शिक्षा की गारंटी देता है।',
+      },
+      {
+        'en':
+            'The Mediation Act 2023 provides a legal framework for mediation in India — promoting out-of-court dispute resolution.',
+        'hi':
+            'मध्यस्थता अधिनियम 2023 भारत में मध्यस्थता का कानूनी ढांचा प्रदान करता है — अदालत से बाहर विवाद समाधान को बढ़ावा।',
+      },
+      {
+        'en':
+            'The Right to Information Act 2005 empowers citizens to access information from public authorities within 30 days.',
+        'hi':
+            'सूचना का अधिकार अधिनियम 2005 नागरिकों को 30 दिनों में सरकारी प्राधिकरणों से सूचना प्राप्त करने का अधिकार देता है।',
+      },
+      {
+        'en':
+            'SC/ST/OBC candidates get 5 years age relaxation in most judicial service exams. PwD candidates get up to 10 years.',
+        'hi':
+            'SC/ST/OBC उम्मीदवारों को अधिकांश न्यायिक सेवा परीक्षाओं में 5 वर्ष की आयु छूट मिलती है। PwD को 10 वर्ष तक।',
+      },
+      {
+        'en':
+            'A High Court judge\'s starting salary is ₹2,50,000/month. Supreme Court judges start at ₹2,80,000/month.',
+        'hi':
+            'उच्च न्यायालय के न्यायाधीश का प्रारंभिक वेतन ₹2,50,000/माह है। सर्वोच्च न्यायालय के न्यायाधीश ₹2,80,000/माह से शुरू करते हैं।',
+      },
+      {
+        'en':
+            'Article 39A mandates "equal justice and free legal aid" — the state must ensure the legal system promotes justice on the basis of equal opportunity.',
+        'hi':
+            'अनुच्छेद 39A "समान न्याय और मुफ्त कानूनी सहायता" का आदेश देता है — राज्य को समान अवसर पर न्याय सुनिश्चित करना चाहिए।',
+      },
+      {
+        'en':
+            'The Triple Talaq (instant oral divorce) was declared unconstitutional by the Supreme Court in Shayara Bano v. Union of India (2017).',
+        'hi':
+            'तीन तलाक को सर्वोच्च न्यायालय ने शायरा बानो बनाम भारत संघ (2017) में असंवैधानिक घोषित किया।',
+      },
+      {
+        'en':
+            'The Olga Tellis case (1985) extended Article 21 to include the Right to Livelihood — pavement dwellers cannot be evicted without due process.',
+        'hi':
+            'ओल्गा टेलिस केस (1985) ने अनुच्छेद 21 में आजीविका का अधिकार शामिल किया — फुटपाथ निवासियों को बिना उचित प्रक्रिया के नहीं हटाया जा सकता।',
+      },
+      {
+        'en':
+            'India follows a three-tier court system: Supreme Court → High Courts → Subordinate Courts (District & lower courts).',
+        'hi':
+            'भारत में तीन-स्तरीय न्यायालय प्रणाली है: सर्वोच्च न्यायालय → उच्च न्यायालय → अधीनस्थ न्यायालय (जिला और निचली अदालतें)।',
+      },
+      {
+        'en':
+            'The Maneka Gandhi case (1978) expanded Article 21 — any law depriving life/liberty must be "just, fair, and reasonable."',
+        'hi':
+            'मेनका गांधी केस (1978) ने अनुच्छेद 21 का विस्तार किया — जीवन/स्वतंत्रता से वंचित करने वाला कानून "न्यायसंगत, उचित और तर्कसंगत" होना चाहिए।',
+      },
+      {
+        'en':
+            'The Nirbhaya case (2012) led to the Criminal Law Amendment Act 2013, which introduced stricter punishments for sexual offences.',
+        'hi':
+            'निर्भया केस (2012) से आपराधिक कानून (संशोधन) अधिनियम 2013 आया, जिसने यौन अपराधों के लिए कठोर दंड लागू किए।',
+      },
+      {
+        'en':
+            'Every District has a District Legal Services Authority (DLSA) that provides free legal aid, legal literacy, and Lok Adalat services.',
+        'hi':
+            'हर जिले में जिला विधिक सेवा प्राधिकरण (DLSA) है जो मुफ्त कानूनी सहायता, कानूनी साक्षरता और लोक अदालत सेवाएं प्रदान करता है।',
+      },
+      {
+        'en':
+            'The Constitution originally had 395 Articles and 8 Schedules. Today it has 470+ Articles and 12 Schedules after 100+ amendments.',
+        'hi':
+            'संविधान में मूलतः 395 अनुच्छेद और 8 अनुसूचियां थीं। आज 100+ संशोधनों के बाद 470+ अनुच्छेद और 12 अनुसूचियां हैं।',
+      },
+    ];
   }
 }
 
@@ -392,10 +850,7 @@ class _ScoreItem extends StatelessWidget {
         ),
         Text(
           label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.white.withAlpha(180),
-          ),
+          style: TextStyle(fontSize: 12, color: Colors.white.withAlpha(180)),
         ),
       ],
     );
@@ -427,7 +882,14 @@ class _QuickActionCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade200),
+          border: Border.all(color: color.withAlpha(40)),
+          boxShadow: [
+            BoxShadow(
+              color: color.withAlpha(18),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -436,8 +898,12 @@ class _QuickActionCard extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: color.withAlpha(30),
-                borderRadius: BorderRadius.circular(10),
+                gradient: LinearGradient(
+                  colors: [color.withAlpha(40), color.withAlpha(20)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Center(
                 child: Text(icon, style: const TextStyle(fontSize: 24)),
@@ -446,18 +912,18 @@ class _QuickActionCard extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               title,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 4),
             Text(
               subtitle,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppTheme.textSecondary,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondary),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),

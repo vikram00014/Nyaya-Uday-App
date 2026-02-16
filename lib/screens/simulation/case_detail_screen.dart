@@ -57,8 +57,6 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
       locale,
     );
 
-    debugPrint('Score for ${widget.caseScenario.id}: $score');
-
     if (score != null) {
       await userProvider.updateScore(score['total'] ?? 0);
     }

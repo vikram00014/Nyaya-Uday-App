@@ -20,6 +20,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _hasApiKey = false;
   String _maskedKey = '';
+  bool _showApiPanel = false;
 
   @override
   void initState() {
@@ -197,6 +198,142 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ).animate(delay: 150.ms).fadeIn(),
 
+            const SizedBox(height: 12),
+
+            // Income & PwD row
+            Row(
+              children: [
+                Expanded(
+                  child: _StatCard(
+                    icon: '💰',
+                    value: user?.annualIncome != null
+                        ? '₹${user!.annualIncome!.toStringAsFixed(1)}L'
+                        : '—',
+                    label: isHindi ? 'वार्षिक आय' : 'Annual Income',
+                    isSmallValue: true,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _StatCard(
+                    icon: '♿',
+                    value: user?.hasDisability == true
+                        ? (isHindi ? 'हाँ' : 'Yes')
+                        : (isHindi ? 'नहीं' : 'No'),
+                    label: isHindi ? 'PwD श्रेणी' : 'PwD Category',
+                    isSmallValue: true,
+                  ),
+                ),
+              ],
+            ).animate(delay: 200.ms).fadeIn(),
+
+            const SizedBox(height: 24),
+
+            // ── Personal Details (Editable) ─────────────
+            Text(
+              isHindi ? '📋 व्यक्तिगत विवरण' : '📋 Personal Details',
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            ).animate(delay: 250.ms).fadeIn(),
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: Column(
+                children: [
+                  _EditableInfoTile(
+                    icon: Icons.location_on_outlined,
+                    label: isHindi ? 'राज्य' : 'State',
+                    value: user?.state != null && user!.state.isNotEmpty
+                        ? StateCatalog.displayName(user.state)
+                        : '—',
+                    onTap: () =>
+                        _showStateEditor(context, userProvider, isHindi),
+                  ),
+                  Divider(height: 1, color: Colors.grey.shade100),
+                  _EditableInfoTile(
+                    icon: Icons.school_outlined,
+                    label: isHindi ? 'शिक्षा' : 'Education',
+                    value: _getEducationLabel(
+                      user?.educationLevel ?? '',
+                      isHindi,
+                    ),
+                    onTap: () =>
+                        _showEducationEditor(context, userProvider, isHindi),
+                  ),
+                  Divider(height: 1, color: Colors.grey.shade100),
+                  _EditableInfoTile(
+                    icon: Icons.cake_outlined,
+                    label: isHindi ? 'आयु' : 'Age',
+                    value: user?.age != null ? '${user!.age}' : '—',
+                    onTap: () => _showFieldEditor(
+                      context,
+                      userProvider,
+                      isHindi,
+                      field: 'age',
+                      label: isHindi ? 'आयु' : 'Age',
+                      currentValue: user?.age?.toString() ?? '',
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                  Divider(height: 1, color: Colors.grey.shade100),
+                  _EditableInfoTile(
+                    icon: Icons.category_outlined,
+                    label: isHindi ? 'श्रेणी' : 'Category',
+                    value: user?.category ?? '—',
+                    onTap: () =>
+                        _showCategoryEditor(context, userProvider, isHindi),
+                  ),
+                  Divider(height: 1, color: Colors.grey.shade100),
+                  _EditableInfoTile(
+                    icon: Icons.person_outline,
+                    label: isHindi ? 'लिंग' : 'Gender',
+                    value: user?.gender ?? '—',
+                    onTap: () =>
+                        _showGenderEditor(context, userProvider, isHindi),
+                  ),
+                  Divider(height: 1, color: Colors.grey.shade100),
+                  _EditableInfoTile(
+                    icon: Icons.currency_rupee,
+                    label: isHindi ? 'वार्षिक आय' : 'Annual Income',
+                    value: user?.annualIncome != null
+                        ? '₹${user!.annualIncome!.toStringAsFixed(1)} L'
+                        : '—',
+                    onTap: () => _showFieldEditor(
+                      context,
+                      userProvider,
+                      isHindi,
+                      field: 'income',
+                      label: isHindi
+                          ? 'वार्षिक आय (लाख में)'
+                          : 'Annual Income (in Lakhs)',
+                      currentValue: user?.annualIncome?.toString() ?? '',
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                    ),
+                  ),
+                  Divider(height: 1, color: Colors.grey.shade100),
+                  _EditableInfoTile(
+                    icon: Icons.accessible_outlined,
+                    label: isHindi ? 'PwD श्रेणी' : 'PwD Category',
+                    value: user?.hasDisability == true
+                        ? (isHindi ? 'हाँ' : 'Yes')
+                        : (isHindi ? 'नहीं' : 'No'),
+                    onTap: () async {
+                      final newVal = !(user?.hasDisability ?? false);
+                      await userProvider.updateProfile(hasDisability: newVal);
+                    },
+                  ),
+                ],
+              ),
+            ).animate(delay: 300.ms).fadeIn(),
+
             const SizedBox(height: 24),
 
             // Achievements Section
@@ -330,144 +467,170 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ).animate(delay: 350.ms).fadeIn(),
         const SizedBox(height: 12),
-        Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.grey.shade200),
+        // Long-press the Settings title to reveal API panel
+        GestureDetector(
+          onLongPress: () {
+            setState(() => _showApiPanel = !_showApiPanel);
+          },
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryColor.withAlpha(10),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              isHindi ? '🔧 डेवलपर विकल्प' : '🔧 Developer Options',
+              style: TextStyle(
+                fontSize: 11,
+                color: _showApiPanel
+                    ? AppTheme.primaryColor
+                    : Colors.transparent,
+              ),
+            ),
           ),
-          child: Column(
-            children: [
-              // ── API Key Tile ───────────────────────────────
-              ListTile(
-                leading: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: _hasApiKey
-                        ? Colors.green.shade50
-                        : Colors.orange.shade50,
-                    borderRadius: BorderRadius.circular(10),
+        ),
+        if (_showApiPanel) ...[
+          const SizedBox(height: 8),
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.grey.shade200),
+            ),
+            child: Column(
+              children: [
+                // ── API Key Tile ───────────────────────────────
+                ListTile(
+                  leading: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: _hasApiKey
+                          ? Colors.green.shade50
+                          : Colors.orange.shade50,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      _hasApiKey ? Icons.vpn_key : Icons.key_off,
+                      color: _hasApiKey
+                          ? Colors.green.shade700
+                          : Colors.orange.shade700,
+                      size: 20,
+                    ),
                   ),
-                  child: Icon(
-                    _hasApiKey ? Icons.vpn_key : Icons.key_off,
-                    color: _hasApiKey
-                        ? Colors.green.shade700
-                        : Colors.orange.shade700,
-                    size: 20,
+                  title: Text(
+                    isHindi ? 'Groq API Key' : 'Groq API Key',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
-                ),
-                title: Text(
-                  isHindi ? 'Groq API Key' : 'Groq API Key',
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
-                subtitle: Text(
-                  _hasApiKey
-                      ? _maskedKey
-                      : (isHindi
-                            ? 'AI चैटबॉट के लिए key सेट करें'
-                            : 'Set key to enable AI chatbot'),
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: _hasApiKey
-                        ? AppTheme.textSecondary
-                        : Colors.orange.shade700,
+                  subtitle: Text(
+                    _hasApiKey
+                        ? _maskedKey
+                        : (isHindi
+                              ? 'AI चैटबॉट के लिए key सेट करें'
+                              : 'Set key to enable AI chatbot'),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: _hasApiKey
+                          ? AppTheme.textSecondary
+                          : Colors.orange.shade700,
+                    ),
                   ),
-                ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (_hasApiKey)
-                      IconButton(
-                        icon: Icon(
-                          Icons.delete_outline,
-                          color: Colors.red.shade400,
-                          size: 20,
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_hasApiKey)
+                        IconButton(
+                          icon: Icon(
+                            Icons.delete_outline,
+                            color: Colors.red.shade400,
+                            size: 20,
+                          ),
+                          tooltip: isHindi ? 'Key हटाएं' : 'Remove Key',
+                          onPressed: () => _confirmRemoveKey(context, isHindi),
                         ),
-                        tooltip: isHindi ? 'Key हटाएं' : 'Remove Key',
-                        onPressed: () => _confirmRemoveKey(context, isHindi),
+                      Icon(
+                        Icons.arrow_forward_ios,
+                        size: 14,
+                        color: AppTheme.textSecondary,
                       ),
-                    Icon(
-                      Icons.arrow_forward_ios,
-                      size: 14,
-                      color: AppTheme.textSecondary,
-                    ),
-                  ],
+                    ],
+                  ),
+                  onTap: () => _showApiKeyDialog(context, isHindi),
                 ),
-                onTap: () => _showApiKeyDialog(context, isHindi),
-              ),
-              Divider(height: 1, color: Colors.grey.shade100),
-              // Status indicator
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10,
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _hasApiKey ? Colors.green : Colors.orange,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        _hasApiKey
-                            ? (isHindi
-                                  ? 'AI मोड सक्रिय — इंटरनेट होने पर AI जवाब देगा'
-                                  : 'AI mode active — will use AI when online')
-                            : (isHindi
-                                  ? 'ऑफ़लाइन मोड — सिर्फ़ नियम-आधारित उत्तर'
-                                  : 'Offline mode — rule-based answers only'),
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: AppTheme.textSecondary,
+                Divider(height: 1, color: Colors.grey.shade100),
+                // Status indicator
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _hasApiKey ? Colors.green : Colors.orange,
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              Divider(height: 1, color: Colors.grey.shade100),
-              // Info tile
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(
-                      Icons.info_outline,
-                      size: 16,
-                      color: Colors.blue.shade400,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        isHindi
-                            ? 'Groq का free tier API key groq.com से बनाएं। '
-                                  'Limit खत्म होने पर नई key यहां बदल सकते हैं — '
-                                  'app दोबारा build करने की ज़रूरत नहीं।'
-                            : 'Get a free Groq API key from groq.com. '
-                                  'When the free tier limit runs out, just swap '
-                                  'the key here — no need to rebuild the app.',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.blue.shade700,
-                          height: 1.4,
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _hasApiKey
+                              ? (isHindi
+                                    ? 'AI मोड सक्रिय — इंटरनेट होने पर AI जवाब देगा'
+                                    : 'AI mode active — will use AI when online')
+                              : (isHindi
+                                    ? 'ऑफ़लाइन मोड — सिर्फ़ नियम-आधारित उत्तर'
+                                    : 'Offline mode — rule-based answers only'),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppTheme.textSecondary,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ).animate(delay: 400.ms).fadeIn(),
+                Divider(height: 1, color: Colors.grey.shade100),
+                // Info tile
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        size: 16,
+                        color: Colors.blue.shade400,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          isHindi
+                              ? 'Groq का free tier API key groq.com से बनाएं। '
+                                    'Limit खत्म होने पर नई key यहां बदल सकते हैं — '
+                                    'app दोबारा build करने की ज़रूरत नहीं।'
+                              : 'Get a free Groq API key from groq.com. '
+                                    'When the free tier limit runs out, just swap '
+                                    'the key here — no need to rebuild the app.',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.blue.shade700,
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ).animate(delay: 400.ms).fadeIn(),
+        ], // end of _showApiPanel
       ],
     );
   }
@@ -639,6 +802,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         title: Text(isHindi ? 'नाम संपादित करें' : 'Edit Name'),
         content: TextField(
           controller: nameController,
+          textCapitalization: TextCapitalization.words,
           decoration: InputDecoration(
             hintText: isHindi ? 'अपना नाम दर्ज करें' : 'Enter your name',
             border: const OutlineInputBorder(),
@@ -656,6 +820,279 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 userProvider.updateDisplayName(nameController.text.trim());
                 Navigator.of(ctx).pop();
               }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryColor,
+            ),
+            child: Text(
+              isHindi ? 'सहेजें' : 'Save',
+              style: const TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Profile field editors ──────────────────────────────────
+
+  void _showStateEditor(
+    BuildContext context,
+    UserProvider userProvider,
+    bool isHindi,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.3,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (_, scrollCtrl) => Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                isHindi ? 'राज्य चुनें' : 'Select State',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            Expanded(
+              child: ListView.builder(
+                controller: scrollCtrl,
+                itemCount: StateCatalog.all.length,
+                itemBuilder: (_, i) {
+                  final s = StateCatalog.all[i];
+                  final isSelected = userProvider.user?.state == s.code;
+                  return ListTile(
+                    leading: Icon(
+                      isSelected
+                          ? Icons.radio_button_checked
+                          : Icons.radio_button_off,
+                      color: isSelected ? AppTheme.primaryColor : Colors.grey,
+                    ),
+                    title: Text(isHindi ? s.nameHi : s.name),
+                    selected: isSelected,
+                    onTap: () async {
+                      await userProvider.updateProfile(state: s.code);
+                      if (ctx.mounted) Navigator.of(ctx).pop();
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showEducationEditor(
+    BuildContext context,
+    UserProvider userProvider,
+    bool isHindi,
+  ) {
+    final levels = [
+      {
+        'code': 'class_10',
+        'label': isHindi ? '10वीं' : 'Class 10',
+        'icon': '🎒',
+      },
+      {
+        'code': 'class_12',
+        'label': isHindi ? '12वीं' : 'Class 12',
+        'icon': '📚',
+      },
+      {
+        'code': 'graduate',
+        'label': isHindi ? 'स्नातक' : 'Graduate',
+        'icon': '🎓',
+      },
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              isHindi ? 'शिक्षा स्तर चुनें' : 'Select Education Level',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            ...levels.map((l) {
+              final isSelected = userProvider.user?.educationLevel == l['code'];
+              return ListTile(
+                leading: Text(l['icon']!, style: const TextStyle(fontSize: 24)),
+                title: Text(l['label']!),
+                trailing: isSelected
+                    ? const Icon(
+                        Icons.check_circle,
+                        color: AppTheme.primaryColor,
+                      )
+                    : null,
+                onTap: () async {
+                  await userProvider.updateProfile(educationLevel: l['code']);
+                  if (ctx.mounted) Navigator.of(ctx).pop();
+                },
+              );
+            }),
+            const SizedBox(height: 12),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showCategoryEditor(
+    BuildContext context,
+    UserProvider userProvider,
+    bool isHindi,
+  ) {
+    final categories = ['General', 'SC', 'ST', 'OBC', 'EWS'];
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              isHindi ? 'श्रेणी चुनें' : 'Select Category',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: categories.map((cat) {
+                final isSelected = userProvider.user?.category == cat;
+                return ChoiceChip(
+                  label: Text(cat),
+                  selected: isSelected,
+                  selectedColor: AppTheme.primaryColor.withAlpha(40),
+                  onSelected: (_) async {
+                    await userProvider.updateProfile(category: cat);
+                    if (ctx.mounted) Navigator.of(ctx).pop();
+                  },
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showGenderEditor(
+    BuildContext context,
+    UserProvider userProvider,
+    bool isHindi,
+  ) {
+    final genders = [
+      {'code': 'Male', 'label': isHindi ? 'पुरुष' : 'Male', 'icon': '👨'},
+      {'code': 'Female', 'label': isHindi ? 'महिला' : 'Female', 'icon': '👩'},
+      {'code': 'Other', 'label': isHindi ? 'अन्य' : 'Other', 'icon': '🧑'},
+    ];
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              isHindi ? 'लिंग चुनें' : 'Select Gender',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            ...genders.map(
+              (g) => ListTile(
+                leading: Text(g['icon']!, style: const TextStyle(fontSize: 24)),
+                title: Text(g['label']!),
+                trailing: userProvider.user?.gender == g['code']
+                    ? const Icon(
+                        Icons.check_circle,
+                        color: AppTheme.primaryColor,
+                      )
+                    : null,
+                onTap: () async {
+                  await userProvider.updateProfile(gender: g['code']);
+                  if (ctx.mounted) Navigator.of(ctx).pop();
+                },
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showFieldEditor(
+    BuildContext context,
+    UserProvider userProvider,
+    bool isHindi, {
+    required String field,
+    required String label,
+    required String currentValue,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    final controller = TextEditingController(text: currentValue);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(label),
+        content: TextField(
+          controller: controller,
+          keyboardType: keyboardType,
+          autofocus: true,
+          decoration: InputDecoration(
+            border: const OutlineInputBorder(),
+            hintText: label,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(isHindi ? 'रद्द करें' : 'Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final val = controller.text.trim();
+              if (val.isNotEmpty) {
+                if (field == 'age') {
+                  final age = int.tryParse(val);
+                  if (age != null) {
+                    await userProvider.updateProfile(age: age);
+                  }
+                } else if (field == 'income') {
+                  final income = double.tryParse(val);
+                  if (income != null) {
+                    await userProvider.updateProfile(annualIncome: income);
+                  }
+                }
+              }
+              if (ctx.mounted) Navigator.of(ctx).pop();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primaryColor,
@@ -714,6 +1151,45 @@ class _StatCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _EditableInfoTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final VoidCallback onTap;
+
+  const _EditableInfoTile({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(icon, color: AppTheme.primaryColor, size: 22),
+      title: Text(
+        label,
+        style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+      ),
+      subtitle: Text(
+        value,
+        style: const TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+          color: AppTheme.textPrimary,
+        ),
+      ),
+      trailing: const Icon(
+        Icons.edit_outlined,
+        size: 18,
+        color: AppTheme.textSecondary,
+      ),
+      onTap: onTap,
     );
   }
 }
