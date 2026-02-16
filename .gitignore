@@ -50,6 +50,9 @@ app.*.map.json
 # ── Internal docs (not for push) ──
 /docs/
 
+# ── API keys (never push secrets) ──
+lib/config/api_keys.dart
+
 # ── Release APKs (DO push — for evaluators) ──
 # The /release/ folder is NOT ignored; APKs there will be pushed.
 !/release/

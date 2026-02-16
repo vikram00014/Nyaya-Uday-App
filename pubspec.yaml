@@ -28,6 +28,8 @@ dependencies:
   
   # URL Launcher (clickable links)
   url_launcher: ^6.2.5
+  http: ^1.2.1
+  connectivity_plus: ^6.0.3
   
   # Internationalization
   intl: any

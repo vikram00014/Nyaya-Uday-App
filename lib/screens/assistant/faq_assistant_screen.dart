@@ -7,6 +7,8 @@ import '../../config/app_theme.dart';
 import '../../providers/locale_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../models/state_catalog.dart';
+import '../../services/groq_service.dart';
+import '../../services/knowledge_base.dart';
 
 // ─────────────────────────────────────────────────────────────
 // Civic Voice Interface (CVI) — Chat-based Judicial Assistant
@@ -74,16 +76,27 @@ class _FaqAssistantScreenState extends State<FaqAssistantScreen> {
   bool _summaryOffered = false;
   bool _timeWarningShown = false;
 
+  // LLM (Groq) state
+  bool _isOnline = false;
+  bool _isLlmTyping = false;
+  final List<Map<String, String>> _conversationHistory = [];
+
   @override
   void initState() {
     super.initState();
     _speech = stt.SpeechToText();
     _initSpeech();
+    _checkConnectivity();
 
     // Feature 1: Load session context from user profile
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadSessionContext();
     });
+  }
+
+  Future<void> _checkConnectivity() async {
+    final online = await GroqService.isOnline();
+    if (mounted) setState(() => _isOnline = online);
   }
 
   // Feature 1: Read user's state and education from provider
@@ -369,14 +382,81 @@ class _FaqAssistantScreenState extends State<FaqAssistantScreen> {
     final intentQuery = _detectVoiceIntent(lowerQ, isHindi);
     final searchQ = intentQuery ?? lowerQ;
 
-    final allFaqs = _getFaqs(isHindi);
-    final results = allFaqs.where((faq) => _matchesFaq(faq, searchQ)).toList();
-
     // Feature 1: Track topic in session
     final topic = _detectTopic(lowerQ, isHindi);
     if (!_session.topicsDiscussed.contains(topic)) {
       _session.topicsDiscussed.add(topic);
     }
+
+    // ── LLM path (online) ───────────────────────────────────
+    if (_isOnline) {
+      _processWithLlm(query, isHindi);
+      return;
+    }
+
+    // ── Rule-based path (offline fallback) ──────────────────
+    _processRuleBased(searchQ, lowerQ, isHindi);
+  }
+
+  /// Send the query to the Groq LLM with full knowledge context.
+  Future<void> _processWithLlm(String query, bool isHindi) async {
+    setState(() => _isLlmTyping = true);
+    _scrollToBottom();
+
+    final locale = isHindi ? 'hi' : 'en';
+    final systemPrompt = KnowledgeBase.buildSystemPrompt(
+      userState: _session.userStateDisplay ?? _session.userState,
+      userEducation: _session.userEducation,
+      locale: locale,
+    );
+
+    // Add previous context reference if available
+    String enrichedQuery = query;
+    if (_session.topicsDiscussed.length > 1) {
+      final prevTopics = _session.topicsDiscussed
+          .sublist(0, _session.topicsDiscussed.length - 1)
+          .join(', ');
+      enrichedQuery =
+          '(Previously discussed: $prevTopics)\n\nNew question: $query';
+    }
+
+    final reply = await GroqService.chat(
+      systemPrompt: systemPrompt,
+      conversationHistory: _conversationHistory,
+      userMessage: enrichedQuery,
+    );
+
+    // Track in conversation history (keep last 10 exchanges = 20 messages)
+    _conversationHistory.add({'role': 'user', 'content': query});
+
+    if (reply != null) {
+      _conversationHistory.add({'role': 'assistant', 'content': reply});
+      if (_conversationHistory.length > 20) {
+        _conversationHistory.removeRange(0, 2);
+      }
+
+      setState(() {
+        _isLlmTyping = false;
+        _messages.add(_ChatMessage(text: reply, type: MessageType.bot));
+      });
+    } else {
+      // LLM failed — fall back to rule-based for this query
+      setState(() {
+        _isLlmTyping = false;
+        _isOnline = false; // mark offline for subsequent queries
+      });
+      final lowerQ = query.toLowerCase();
+      final intentQuery = _detectVoiceIntent(lowerQ, isHindi);
+      final searchQ = intentQuery ?? lowerQ;
+      _processRuleBased(searchQ, lowerQ, isHindi);
+    }
+    _scrollToBottom();
+  }
+
+  /// Original rule-based FAQ matching (offline fallback).
+  void _processRuleBased(String searchQ, String lowerQ, bool isHindi) {
+    final allFaqs = _getFaqs(isHindi);
+    final results = allFaqs.where((faq) => _matchesFaq(faq, searchQ)).toList();
 
     if (results.isNotEmpty) {
       // Feature 1: Reference earlier context
@@ -409,7 +489,7 @@ class _FaqAssistantScreenState extends State<FaqAssistantScreen> {
       });
     } else {
       // Feature 3 + 5: No results → Alternatives + Graceful failure
-      _handleNoResults(query, isHindi);
+      _handleNoResults(lowerQ, isHindi);
     }
     _scrollToBottom();
   }
@@ -1036,11 +1116,51 @@ For exact figures, check the latest official judicial recruitment notification f
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          isHindi ? 'न्यायिक सहायक (CVI)' : 'Judicial Assistant (CVI)',
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(isHindi ? 'न्यायिक सहायक (CVI)' : 'Judicial Assistant (CVI)'),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: _isOnline
+                    ? Colors.green.shade400.withAlpha(60)
+                    : Colors.orange.shade400.withAlpha(60),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    _isOnline ? Icons.auto_awesome : Icons.wifi_off,
+                    size: 12,
+                    color: _isOnline ? Colors.greenAccent : Colors.orangeAccent,
+                  ),
+                  const SizedBox(width: 3),
+                  Text(
+                    _isOnline ? 'AI' : (isHindi ? 'ऑफ़लाइन' : 'Offline'),
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: _isOnline
+                          ? Colors.greenAccent
+                          : Colors.orangeAccent,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
         backgroundColor: AppTheme.primaryColor,
         actions: [
+          // Refresh connectivity
+          IconButton(
+            icon: const Icon(Icons.refresh, size: 20),
+            tooltip: isHindi ? 'कनेक्शन जांचें' : 'Check connection',
+            onPressed: _checkConnectivity,
+          ),
           // Feature 5: Graceful exit button
           IconButton(
             icon: const Icon(Icons.summarize_outlined),
@@ -1126,6 +1246,43 @@ For exact figures, check the latest official judicial recruitment notification f
               },
             ),
           ),
+
+          // ── LLM thinking indicator ──────────────────────────
+          if (_isLlmTyping)
+            Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation(
+                            AppTheme.accentColor,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        isHindi ? 'AI सोच रहा है...' : 'AI is thinking...',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppTheme.textSecondary,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+                .animate(onPlay: (c) => c.repeat())
+                .shimmer(
+                  duration: 1200.ms,
+                  color: AppTheme.accentColor.withAlpha(40),
+                ),
 
           // ── Input bar ─────────────────────────────────────
           if (_awaitingCheckpoint)
