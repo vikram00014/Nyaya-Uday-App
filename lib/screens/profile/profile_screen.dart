@@ -460,19 +460,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          isHindi ? '⚙️ सेटिंग्स' : '⚙️ Settings',
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-        ).animate(delay: 350.ms).fadeIn(),
-        const SizedBox(height: 12),
-        // Long-press the Settings title to reveal API panel
         GestureDetector(
           onLongPress: () {
             setState(() => _showApiPanel = !_showApiPanel);
           },
-          child: Container(
+          child: Text(
+            isHindi ? '⚙️ सेटिंग्स' : '⚙️ Settings',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          ),
+        ).animate(delay: 350.ms).fadeIn(),
+        const SizedBox(height: 12),
+        // Hidden developer label — only visible after long-press
+        if (_showApiPanel)
+          Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
@@ -481,15 +483,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             child: Text(
               isHindi ? '🔧 डेवलपर विकल्प' : '🔧 Developer Options',
-              style: TextStyle(
-                fontSize: 11,
-                color: _showApiPanel
-                    ? AppTheme.primaryColor
-                    : Colors.transparent,
-              ),
+              style: TextStyle(fontSize: 11, color: AppTheme.primaryColor),
             ),
           ),
-        ),
         if (_showApiPanel) ...[
           const SizedBox(height: 8),
           Container(

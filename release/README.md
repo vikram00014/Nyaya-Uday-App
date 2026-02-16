@@ -5,15 +5,15 @@
 | APK | Size | Best For |
 |---|---|---|
 | **[nyaya-uday-universal.apk](nyaya-uday-universal.apk)** | ~51.7 MB | Works on ALL Android devices |
-| [nyaya-uday-armeabi-v7a.apk](nyaya-uday-armeabi-v7a.apk) | ~16 MB | Older / low-end phones (32-bit ARM) |
-| [nyaya-uday-arm64-v8a.apk](nyaya-uday-arm64-v8a.apk) | ~19 MB | Modern phones (64-bit ARM) |
-| [nyaya-uday-x86_64.apk](nyaya-uday-x86_64.apk) | ~20 MB | Emulators / x86 tablets |
+| [nyaya-uday-armeabi-v7a.apk](nyaya-uday-armeabi-v7a.apk) | ~16.2 MB | Older / low-end phones (32-bit ARM) |
+| [nyaya-uday-arm64-v8a.apk](nyaya-uday-arm64-v8a.apk) | ~18.4 MB | Modern phones (64-bit ARM) |
+| [nyaya-uday-x86_64.apk](nyaya-uday-x86_64.apk) | ~19.8 MB | Emulators / x86 tablets |
 
 ### Not sure which one?
 **Download `nyaya-uday-universal.apk`** — it works on every Android device.
 
 ### For low-end devices
-Download `nyaya-uday-armeabi-v7a.apk` (~16 MB) — smallest APK, optimized for older phones.
+Download `nyaya-uday-armeabi-v7a.apk` (~16.2 MB) — smallest APK, optimized for older phones.
 
 ---
 

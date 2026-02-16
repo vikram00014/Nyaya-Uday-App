@@ -215,9 +215,9 @@ flutter build apk --release --split-per-abi
 ```
 
 Outputs:
-- `app-armeabi-v7a-release.apk` (~16 MB)
-- `app-arm64-v8a-release.apk` (~19 MB)
-- `app-x86_64-release.apk` (~20 MB)
+- `app-armeabi-v7a-release.apk` (~16.2 MB)
+- `app-arm64-v8a-release.apk` (~18.4 MB)
+- `app-x86_64-release.apk` (~19.8 MB)
 
 ---
 
