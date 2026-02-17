@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
 import '../../config/app_theme.dart';
@@ -170,12 +169,7 @@ class _LegalGlossaryScreenState extends State<LegalGlossaryScreen> {
                                   definition: term['definition']!,
                                   example: term['example'],
                                   category: term['category']!,
-                                )
-                                .animate(
-                                  delay: Duration(milliseconds: 50 * entry.key),
-                                )
-                                .fadeIn()
-                                .slideX(begin: 0.05, end: 0);
+                                );
                           }),
                         ],
                       );

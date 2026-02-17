@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../../l10n/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
 
@@ -72,9 +71,6 @@ class ResultScreen extends StatelessWidget {
                   ),
                 ],
               ),
-            ).animate().fadeIn().scale(
-              begin: const Offset(0.9, 0.9),
-              end: const Offset(1, 1),
             ),
 
             const SizedBox(height: 24),
@@ -85,7 +81,7 @@ class ResultScreen extends StatelessWidget {
               style: Theme.of(
                 context,
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-            ).animate(delay: 200.ms).fadeIn(),
+),
 
             const SizedBox(height: 16),
 
@@ -98,7 +94,7 @@ class ResultScreen extends StatelessWidget {
               description: isHindi
                   ? 'क्या आपने दोनों पक्षों पर विचार किया?'
                   : 'Did you consider both parties?',
-            ).animate(delay: 300.ms).fadeIn().slideX(begin: -0.1, end: 0),
+),
 
             const SizedBox(height: 12),
 
@@ -111,7 +107,7 @@ class ResultScreen extends StatelessWidget {
               description: isHindi
                   ? 'क्या आपने तथ्यों पर भरोसा किया?'
                   : 'Did you rely on facts?',
-            ).animate(delay: 400.ms).fadeIn().slideX(begin: -0.1, end: 0),
+),
 
             const SizedBox(height: 12),
 
@@ -124,7 +120,7 @@ class ResultScreen extends StatelessWidget {
               description: isHindi
                   ? 'क्या आपने पूर्वाग्रह से बचा?'
                   : 'Did you avoid bias?',
-            ).animate(delay: 500.ms).fadeIn().slideX(begin: -0.1, end: 0),
+),
 
             const SizedBox(height: 32),
 
@@ -164,7 +160,7 @@ class ResultScreen extends StatelessWidget {
                   ),
                 ),
               ],
-            ).animate(delay: 600.ms).fadeIn(),
+),
           ],
         ),
       ),

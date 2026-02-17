@@ -4,6 +4,7 @@
 build_log.txt
 error_log.txt
 *.bak_encoding_fix
+*.backup.dart
 *.pyc
 *.swp
 .DS_Store

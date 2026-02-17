@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../config/app_theme.dart';
 import '../../providers/locale_provider.dart';
+import '../../widgets/external_link_text.dart';
 
 class LegalModulesScreen extends StatelessWidget {
   const LegalModulesScreen({super.key});
@@ -21,63 +20,123 @@ class LegalModulesScreen extends StatelessWidget {
       modules[i]['quiz'] = quizzes[i];
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(isHindi ? 'Legal Literacy' : 'Legal Literacy'),
-        backgroundColor: AppTheme.primaryColor,
-      ),
-      body: Column(
-        children: [
-          Container(
-            margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.amber.shade50,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.amber.shade200),
+    // Separate modules into Study and Landmark Cases
+    final landmarkCategory = isHindi ? '⚖️ ऐतिहासिक फैसले' : '⚖️ Landmark Cases';
+    final studyModules = modules
+        .where((m) => m['category'] != landmarkCategory)
+        .toList();
+    final landmarkModules = modules
+        .where((m) => m['category'] == landmarkCategory)
+        .toList();
+
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          title: Text(isHindi ? 'कानूनी साक्षरता' : 'Legal Literacy'),
+          backgroundColor: AppTheme.primaryColor,
+          bottom: TabBar(
+            indicatorColor: Colors.white,
+            indicatorWeight: 3.0,
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white70,
+            labelStyle: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
             ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(Icons.info_outline, size: 18, color: Colors.brown),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    isHindi
-                        ? 'This is educational guidance. Always verify eligibility and exam rules from the latest official notification.'
-                        : 'This is educational guidance. Always verify eligibility and exam rules from the latest official notification.',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: Colors.brown,
-                      height: 1.3,
+            unselectedLabelStyle: const TextStyle(
+              fontWeight: FontWeight.normal,
+              fontSize: 14,
+            ),
+            tabs: [
+              Tab(
+                child: Text(
+                  isHindi ? '📚 अध्ययन' : '📚 Study',
+                  style: const TextStyle(fontSize: 15),
+                ),
+              ),
+              Tab(
+                child: Text(
+                  isHindi ? '⚖️ फैसले' : '⚖️ Cases',
+                  style: const TextStyle(fontSize: 15),
+                ),
+              ),
+            ],
+          ),
+        ),
+        body: Column(
+          children: [
+            Container(
+              margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.amber.shade50,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.amber.shade200),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.info_outline, size: 18, color: Colors.brown),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      isHindi
+                          ? 'This is educational guidance. Always verify eligibility and exam rules from the latest official notification.'
+                          : 'This is educational guidance. Always verify eligibility and exam rules from the latest official notification.',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Colors.brown,
+                        height: 1.3,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: modules.length,
-              itemBuilder: (context, index) {
-                final module = modules[index];
-                return _ModuleCard(
-                      icon: module['icon']! as String,
-                      title: module['title']! as String,
-                      duration: module['duration']! as String,
-                      content: module['content']! as String,
-                      category: module['category']! as String,
-                      isHindi: isHindi,
-                      quiz: module['quiz'] as Map<String, dynamic>?,
-                    )
-                    .animate(delay: Duration(milliseconds: 80 * index))
-                    .fadeIn()
-                    .slideY(begin: 0.1, end: 0);
-              },
+            Expanded(
+              child: TabBarView(
+                children: [
+                  // Study Tab
+                  ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: studyModules.length,
+                    itemBuilder: (context, index) {
+                      final module = studyModules[index];
+                      return _ModuleCard(
+                        icon: module['icon']! as String,
+                        title: module['title']! as String,
+                        duration: module['duration']! as String,
+                        content: module['content']! as String,
+                        category: module['category']! as String,
+                        isHindi: isHindi,
+                        quiz: module['quiz'] as Map<String, dynamic>?,
+                      );
+                    },
+                  ),
+                  // Landmark Cases Tab
+                  ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: landmarkModules.length,
+                    itemBuilder: (context, index) {
+                      final module = landmarkModules[index];
+                      return _ModuleCard(
+                        icon: module['icon']! as String,
+                        title: module['title']! as String,
+                        duration: module['duration']! as String,
+                        content: module['content']! as String,
+                        category: module['category']! as String,
+                        isHindi: isHindi,
+                        quiz: module['quiz'] as Map<String, dynamic>?,
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -939,7 +998,7 @@ Eligible persons:
 इस फैसले ने 2013 में "कार्यस्थल पर महिलाओं का यौन उत्पीड़न (रोकथाम, निषेध और निवारण) अधिनियम" का आधार तैयार किया। हर कार्यस्थल पर ICC (आंतरिक शिकायत समिति) अनिवार्य हुई।
 
 📄 आधिकारिक दस्तावेज़:
-indiankanoon.org/doc/1031794/
+https://indiankanoon.org/doc/1031794/
 
 🎬 YouTube पर देखें:
 https://www.youtube.com/results?search_query=vishaka+vs+state+of+rajasthan+explained'''
@@ -956,7 +1015,7 @@ The Supreme Court issued the "Vishaka Guidelines" for prevention of sexual haras
 This judgment laid the foundation for the "Sexual Harassment of Women at Workplace (Prevention, Prohibition and Redressal) Act, 2013." Every workplace must have an ICC (Internal Complaints Committee).
 
 📄 Official Document:
-indiankanoon.org/doc/1031794/
+https://indiankanoon.org/doc/1031794/
 
 🎬 Watch on YouTube:
 https://www.youtube.com/results?search_query=vishaka+vs+state+of+rajasthan+explained''',
@@ -983,7 +1042,7 @@ https://www.youtube.com/results?search_query=vishaka+vs+state+of+rajasthan+expla
 इससे 2019 में "मुस्लिम महिला (विवाह पर अधिकारों का संरक्षण) अधिनियम" बना, जिसने तीन तलाक को दंडनीय अपराध बनाया। यह मुस्लिम महिलाओं के अधिकारों की रक्षा का ऐतिहासिक कदम था।
 
 📄 आधिकारिक दस्तावेज़:
-indiankanoon.org/doc/115701246/
+https://indiankanoon.org/doc/115701246/
 
 🎬 YouTube पर देखें:
 https://www.youtube.com/results?search_query=shayara+bano+triple+talaq+case+explained'''
@@ -1000,7 +1059,7 @@ The Supreme Court, by a 3-2 majority, declared Triple Talaq unconstitutional and
 This led to the "Muslim Women (Protection of Rights on Marriage) Act, 2019" which made Triple Talaq a punishable offense. It was a historic step in protecting the rights of Muslim women.
 
 📄 Official Document:
-indiankanoon.org/doc/115701246/
+https://indiankanoon.org/doc/115701246/
 
 🎬 Watch on YouTube:
 https://www.youtube.com/results?search_query=shayara+bano+triple+talaq+case+explained''',
@@ -1027,7 +1086,7 @@ https://www.youtube.com/results?search_query=shayara+bano+triple+talaq+case+expl
 इसने डिजिटल युग में नागरिकों के डेटा संरक्षण का आधार तैयार किया। 2023 का "डिजिटल व्यक्तिगत डेटा संरक्षण अधिनियम" इसी फैसले पर आधारित है। LGBTQ+ अधिकारों के लिए भी यह मार्गदर्शक बना।
 
 📄 आधिकारिक दस्तावेज़:
-indiankanoon.org/doc/127517806/
+https://indiankanoon.org/doc/127517806/
 
 🎬 YouTube पर देखें:
 https://www.youtube.com/results?search_query=puttaswamy+right+to+privacy+case+explained'''
@@ -1044,7 +1103,7 @@ A 9-judge Constitution Bench unanimously declared the Right to Privacy as a fund
 It laid the foundation for citizens' data protection in the digital age. The "Digital Personal Data Protection Act, 2023" is based on this judgment. It also became a guiding precedent for LGBTQ+ rights.
 
 📄 Official Document:
-indiankanoon.org/doc/127517806/
+https://indiankanoon.org/doc/127517806/
 
 🎬 Watch on YouTube:
 https://www.youtube.com/results?search_query=puttaswamy+right+to+privacy+case+explained''',
@@ -1071,7 +1130,7 @@ https://www.youtube.com/results?search_query=puttaswamy+right+to+privacy+case+ex
 यह भारतीय संविधानिक कानून का सबसे महत्वपूर्ण फैसला है। इसने संविधान को तानाशाही से बचाया। न्यायिक समीक्षा, लोकतंत्र, धर्मनिरपेक्षता, मौलिक अधिकार - ये सब मूल संरचना का हिस्सा हैं।
 
 📄 आधिकारिक दस्तावेज़:
-indiankanoon.org/doc/257876/
+https://indiankanoon.org/doc/257876/
 
 🎬 YouTube पर देखें:
 https://www.youtube.com/results?search_query=kesavananda+bharati+basic+structure+doctrine+explained'''
@@ -1088,7 +1147,7 @@ The largest-ever 13-judge Constitution Bench, by 7-6 majority, established the "
 This is the most important judgment in Indian constitutional law. It protected the Constitution from authoritarian changes. Judicial review, democracy, secularism, fundamental rights — all are part of the basic structure.
 
 📄 Official Document:
-indiankanoon.org/doc/257876/
+https://indiankanoon.org/doc/257876/
 
 🎬 Watch on YouTube:
 https://www.youtube.com/results?search_query=kesavananda+bharati+basic+structure+doctrine+explained''',
@@ -1115,7 +1174,7 @@ https://www.youtube.com/results?search_query=kesavananda+bharati+basic+structure
 इस फैसले ने "Due Process of Law" की अवधारणा भारत में लागू की। अनुच्छेद 14, 19 और 21 को एक साथ पढ़ने की परंपरा शुरू हुई। आज के सभी मानवाधिकार मामलों में इस फैसले का हवाला दिया जाता है।
 
 📄 आधिकारिक दस्तावेज़:
-indiankanoon.org/doc/1766147/
+https://indiankanoon.org/doc/1766147/
 
 🎬 YouTube पर देखें:
 https://www.youtube.com/results?search_query=maneka+gandhi+vs+union+of+india+explained'''
@@ -1132,7 +1191,7 @@ The Supreme Court expanded the interpretation of Article 21. "Right to Life" is 
 This judgment introduced the concept of "Due Process of Law" in India. It established the practice of reading Articles 14, 19, and 21 together. This case is cited in almost all human rights cases today.
 
 📄 Official Document:
-indiankanoon.org/doc/1766147/
+https://indiankanoon.org/doc/1766147/
 
 🎬 Watch on YouTube:
 https://www.youtube.com/results?search_query=maneka+gandhi+vs+union+of+india+explained''',
@@ -1163,7 +1222,7 @@ https://www.youtube.com/results?search_query=maneka+gandhi+vs+union+of+india+exp
 • फास्ट-ट्रैक कोर्ट की स्थापना
 
 📄 आधिकारिक दस्तावेज़:
-indiankanoon.org/doc/78529648/
+https://indiankanoon.org/doc/68696327/
 
 🎬 YouTube पर देखें:
 https://www.youtube.com/results?search_query=nirbhaya+case+india+explained'''
@@ -1184,7 +1243,7 @@ It brought revolutionary changes to Indian criminal law:
 • Establishment of Fast-Track Courts
 
 📄 Official Document:
-indiankanoon.org/doc/78529648/
+https://indiankanoon.org/doc/68696327/
 
 🎬 Watch on YouTube:
 https://www.youtube.com/results?search_query=nirbhaya+case+india+explained''',
@@ -1215,7 +1274,7 @@ https://www.youtube.com/results?search_query=nirbhaya+case+india+explained''',
 इसने पुलिस के मनमाने व्यवहार पर लगाम लगाई। गिरफ्तार व्यक्ति के अधिकारों को संवैधानिक संरक्षण मिला। हर पुलिस स्टेशन में इन नियमों का पालन अनिवार्य है।
 
 📄 आधिकारिक दस्तावेज़:
-indiankanoon.org/doc/501198/
+https://indiankanoon.org/doc/501198/
 
 🎬 YouTube पर देखें:
 https://www.youtube.com/results?search_query=dk+basu+vs+state+of+west+bengal+explained'''
@@ -1236,7 +1295,7 @@ The Supreme Court issued 11 mandatory guidelines to be followed at the time of a
 It curbed arbitrary police behavior. Arrested persons received constitutional protection of their rights. These rules are mandatory in every police station.
 
 📄 Official Document:
-indiankanoon.org/doc/501198/
+https://indiankanoon.org/doc/501198/
 
 🎬 Watch on YouTube:
 https://www.youtube.com/results?search_query=dk+basu+vs+state+of+west+bengal+explained''',
@@ -1263,7 +1322,7 @@ https://www.youtube.com/results?search_query=dk+basu+vs+state+of+west+bengal+exp
 इस फैसले ने 2002 में 86वें संविधान संशोधन का मार्ग प्रशस्त किया, जिसने अनुच्छेद 21-A (6-14 वर्ष के बच्चों को मुफ्त और अनिवार्य शिक्षा) जोड़ा। 2009 में "शिक्षा का अधिकार अधिनियम" (RTE Act) बना।
 
 📄 आधिकारिक दस्तावेज़:
-indiankanoon.org/doc/1775396/
+https://indiankanoon.org/doc/1836993/
 
 🎬 YouTube पर देखें:
 https://www.youtube.com/results?search_query=unnikrishnan+right+to+education+case+explained'''
@@ -1280,7 +1339,7 @@ The Supreme Court declared the Right to Education for children up to 14 years as
 This judgment paved the way for the 86th Constitutional Amendment in 2002, which added Article 21-A (free and compulsory education for children aged 6-14). The "Right to Education Act" (RTE Act) was enacted in 2009.
 
 📄 Official Document:
-indiankanoon.org/doc/1775396/
+https://indiankanoon.org/doc/1836993/
 
 🎬 Watch on YouTube:
 https://www.youtube.com/results?search_query=unnikrishnan+right+to+education+case+explained''',
@@ -1307,7 +1366,7 @@ https://www.youtube.com/results?search_query=unnikrishnan+right+to+education+cas
 इस फैसले ने "आजीविका का अधिकार" को मौलिक अधिकार के रूप में मान्यता दी। शहरी गरीबों के अधिकारों की रक्षा हुई। बेदखली से पहले पुनर्वास अनिवार्य बना। यह सामाजिक न्याय का मील का पत्थर है।
 
 📄 आधिकारिक दस्तावेज़:
-indiankanoon.org/doc/709776/
+https://indiankanoon.org/doc/709776/
 
 🎬 YouTube पर देखें:
 https://www.youtube.com/results?search_query=olga+tellis+vs+bombay+municipal+corporation+explained'''
@@ -1324,7 +1383,7 @@ The Supreme Court held that the "Right to Livelihood" is an integral part of Art
 This judgment recognized the "Right to Livelihood" as a fundamental right. It protected the rights of urban poor. Rehabilitation before eviction became mandatory. It is a milestone in social justice.
 
 📄 Official Document:
-indiankanoon.org/doc/709776/
+https://indiankanoon.org/doc/709776/
 
 🎬 Watch on YouTube:
 https://www.youtube.com/results?search_query=olga+tellis+vs+bombay+municipal+corporation+explained''',
@@ -2016,72 +2075,6 @@ class _ModuleCardState extends State<_ModuleCard> {
     String text,
     TextStyle style,
   ) {
-    final urlRegex = RegExp(
-      r'(https?://[^\s,)]+|www\.[^\s,)]+|[a-zA-Z0-9-]+\.[a-z]{2,}(?:/[^\s,)]*)?)',
-      caseSensitive: false,
-    );
-
-    final lines = text.split('\n');
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: lines.map((line) {
-        final matches = urlRegex.allMatches(line).toList();
-        if (matches.isEmpty) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 4),
-            child: Text(line, style: style),
-          );
-        }
-
-        final spans = <InlineSpan>[];
-        int lastEnd = 0;
-
-        for (final match in matches) {
-          if (match.start > lastEnd) {
-            spans.add(
-              TextSpan(
-                text: line.substring(lastEnd, match.start),
-                style: style,
-              ),
-            );
-          }
-          final urlText = match.group(0)!;
-          final fullUrl = urlText.startsWith('http')
-              ? urlText
-              : 'https://$urlText';
-          spans.add(
-            WidgetSpan(
-              alignment: PlaceholderAlignment.baseline,
-              baseline: TextBaseline.alphabetic,
-              child: GestureDetector(
-                onTap: () async {
-                  final uri = Uri.parse(fullUrl);
-                  if (await canLaunchUrl(uri)) {
-                    await launchUrl(uri, mode: LaunchMode.externalApplication);
-                  }
-                },
-                child: Text(
-                  urlText,
-                  style: style.copyWith(
-                    color: Colors.blue.shade700,
-                    decoration: TextDecoration.underline,
-                  ),
-                ),
-              ),
-            ),
-          );
-          lastEnd = match.end;
-        }
-
-        if (lastEnd < line.length) {
-          spans.add(TextSpan(text: line.substring(lastEnd), style: style));
-        }
-
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 4),
-          child: RichText(text: TextSpan(children: spans)),
-        );
-      }).toList(),
-    );
+    return ExternalLinkText(text: text, style: style);
   }
 }

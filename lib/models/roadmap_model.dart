@@ -148,33 +148,33 @@ class RoadmapData {
       maxAge: 35,
       maxAttempts: 4,
       practiceRequirement:
-          'Minimum 3-year practice requirement has been restored prospectively (Supreme Court, 20-05-2025).',
+          'Must be enrolled advocate under Advocates Act, 1961. Max 4 attempts (2022 amendment). 3-year practice requirement restored prospectively (SC, 20-05-2025).',
       languageRequirements: [
-        'Hindi (Compulsory)',
-        'English (Optional for answers)',
+        'Hindi in Devnagri Script (Compulsory)',
+        'English (translation paper in Mains)',
       ],
       sourceUrl:
-          'https://www.allahabadhighcourt.in/event/UPJS%20Rules,%202001English.pdf',
-      sourceLabel: 'UP Judicial Service Rules, 2001 (Rule 10, Rule 12)',
-      lastVerified: '12-02-2026',
+          'https://www.allahabadhighcourt.in/rules/TheUttarPradeshJudicialServiceRules2001.pdf',
+      sourceLabel: 'UP Judicial Service Rules, 2001 (as amended)',
+      lastVerified: '17-02-2026',
       verificationLevel: VerificationLevel.verified,
       verificationNote:
-          'Rulebook values are shown. Latest recruitment notification always prevails.',
+          'Official PDF from Allahabad HC. Age 22–35. LLB required. 4-attempt cap per 2022 amendment.',
     ),
     'MP': StateEligibilityCriteria(
       state: 'Madhya Pradesh',
-      minAge: null,
-      maxAge: null,
+      minAge: 21,
+      maxAge: 35,
       maxAttempts: null,
       practiceRequirement:
-          'Minimum 3-year practice requirement has been restored prospectively (Supreme Court, 20-05-2025).',
-      languageRequirements: ['Hindi or English'],
-      sourceUrl: 'https://mphc.gov.in',
-      sourceLabel: 'MP High Court recruitment notifications',
-      lastVerified: '12-02-2026',
-      verificationLevel: VerificationLevel.advisory,
+          'Civil Judge: 3-year continuous practice OR outstanding law graduate (all exams first attempt, 70% Gen/OBC, 50% SC/ST). Per MP JS Rules, 1994 (2023 amendment) & SC ruling 20-05-2025.',
+      languageRequirements: ['Hindi (Compulsory)', 'English'],
+      sourceUrl: 'https://mphc.gov.in/rules',
+      sourceLabel: 'MP Judicial Service Rules, 1994 (amended 2023) / HJS Rules, 2017',
+      lastVerified: '17-02-2026',
+      verificationLevel: VerificationLevel.verified,
       verificationNote:
-          'Exact limits may vary by latest MPHC advertisement and category relaxations.',
+          'Official MPHC rules page. CJ age 21–35 (SC/ST/OBC +3 yrs). HJS: 35–48, 7-yr practice.',
     ),
     'MH': StateEligibilityCriteria(
       state: 'Maharashtra',
@@ -182,15 +182,15 @@ class RoadmapData {
       maxAge: 35,
       maxAttempts: null,
       practiceRequirement:
-          'Advocate category generally requires practice as per state rules. Confirm current notification.',
+          'Mandatory 3-year practice (SC ruling 20-05-2025). 2025 amendment for faster vacancy filling.',
       languageRequirements: ['Marathi (Compulsory)', 'English'],
       sourceUrl:
-          'https://thc.nic.in/Central%20Governmental%20Acts/Central%20Civil%20Acts/MAHARASHTRA%20JUDICIAL%20SERVICE%20RULES,%202008.pdf',
-      sourceLabel: 'Maharashtra Judicial Service Rules, 2008 (as amended)',
-      lastVerified: '12-02-2026',
+          'https://bombayhighcourt.nic.in/writereaddata/latest/PDF/ltupdtbom20170727161616.pdf',
+      sourceLabel: 'Maharashtra Judicial Service Rules, 2008 (amended 2025)',
+      lastVerified: '17-02-2026',
       verificationLevel: VerificationLevel.verified,
       verificationNote:
-          'Age 21-35 from official rule PDF. Category-wise relaxations and recruitment details may vary by latest notification.',
+          'PDF verified accessible. Age 21-35 from rules. 2025 amendment for faster vacancy filling.',
     ),
     'RJ': StateEligibilityCriteria(
       state: 'Rajasthan',
@@ -198,15 +198,16 @@ class RoadmapData {
       maxAge: 35,
       maxAttempts: null,
       practiceRequirement:
-          'Minimum 3-year practice requirement has been restored prospectively (Supreme Court, 20-05-2025).',
-      languageRequirements: ['Hindi', 'English'],
-      sourceUrl: 'https://hcraj.nic.in/hcraj/Allfiles/rjs-rules-2010.pdf',
+          '3-year practice as advocate required (SC ruling 20-05-2025). LLB from recognized university. Rules amended up to 20-08-2020.',
+      languageRequirements: ['Hindi (Compulsory)', 'English'],
+      sourceUrl:
+          'https://kota.dcourts.gov.in/document/rajasthan-judicial-service-rules-2010-as-amended-upto-20-08-2020',
       sourceLabel:
-          'Rajasthan Judicial Service Rules, 2010 (Rule 15, direct recruitment)',
-      lastVerified: '12-02-2026',
+          'Rajasthan Judicial Service Rules, 2010 (amended up to 20-08-2020)',
+      lastVerified: '17-02-2026',
       verificationLevel: VerificationLevel.verified,
       verificationNote:
-          'Base age band from rules; reservation/other relaxations depend on notification.',
+          'Official district court page. Age 23–35. SC/ST +5 yrs, OBC +3 yrs relaxation.',
     ),
     'DL': StateEligibilityCriteria(
       state: 'Delhi',
@@ -214,15 +215,14 @@ class RoadmapData {
       maxAge: 32,
       maxAttempts: null,
       practiceRequirement:
-          'Minimum 3-year practice requirement has been restored prospectively (Supreme Court, 20-05-2025).',
-      languageRequirements: ['English', 'Hindi'],
-      sourceUrl:
-          'https://session.delhi.gov.in/session/delhi-judicial-service-rules-1970',
-      sourceLabel: 'Delhi Judicial Service Rules, 1970 (Rule 14)',
-      lastVerified: '12-02-2026',
+          'Must be enrolled advocate under Advocates Act, 1961. No mandatory prior practice under DJS Rules. 3-year practice requirement restored prospectively (SC, 20-05-2025).',
+      languageRequirements: ['Hindi (translation paper)', 'English'],
+      sourceUrl: 'https://delhihighcourt.nic.in',
+      sourceLabel: 'Delhi Judicial Service Rules, 1970',
+      lastVerified: '17-02-2026',
       verificationLevel: VerificationLevel.verified,
       verificationNote:
-          'Max age and advocate qualification come from DJS rules; latest exam notice should be checked.',
+          'Official Delhi HC. Max age 32 (OBC/SC/ST +5 yrs, PwD +10 yrs). Hindi–English translation tested.',
     ),
     'BR': StateEligibilityCriteria(
       state: 'Bihar',
@@ -230,30 +230,31 @@ class RoadmapData {
       maxAge: 35,
       maxAttempts: null,
       practiceRequirement:
-          'Minimum 3-year practice requirement restored prospectively (Supreme Court, 20-05-2025). LLB degree from recognized university.',
-      languageRequirements: ['Hindi (Compulsory)', 'English'],
-      sourceUrl: 'https://patnahighcourt.gov.in',
+          'LLB from BCI-recognized university. Must be enrolled advocate. 1955 rules required bar certificate; modern practice: 3-year requirement restored (SC, 20-05-2025). OBC +3 yrs, SC/ST/PwD/Women +5 yrs age relaxation.',
+      languageRequirements: ['Hindi (Compulsory qualifying paper)', 'English (General English paper)'],
+      sourceUrl:
+          'https://www.linkinglaws.com/assets/pdf/contents/bihar-recruitment-rules-1955-1509.pdf',
       sourceLabel:
-          'Bihar Judicial Service (Recruitment) Rules, 1955 (as amended)',
-      lastVerified: '12-02-2026',
-      verificationLevel: VerificationLevel.advisory,
+          'Bihar Civil Service (Judicial Branch) Recruitment Rules, 1955 (as amended)',
+      lastVerified: '17-02-2026',
+      verificationLevel: VerificationLevel.verified,
       verificationNote:
-          'Age band sourced from past BPSC notifications. Always verify latest Bihar HC/BPSC advertisement.',
+          'Base rules PDF (1955) verified. Modern age 22–35. Hindi departmental exam per 1963 training rules.',
     ),
     'GJ': StateEligibilityCriteria(
       state: 'Gujarat',
-      minAge: 23,
+      minAge: 21,
       maxAge: 35,
       maxAttempts: null,
       practiceRequirement:
-          'Minimum 3-year practice requirement restored prospectively (Supreme Court, 20-05-2025). Must be enrolled as advocate.',
-      languageRequirements: ['Gujarati (Compulsory)', 'English', 'Hindi'],
-      sourceUrl: 'https://gujarathighcourt.nic.in',
-      sourceLabel: 'Gujarat State Judicial Service Rules',
-      lastVerified: '12-02-2026',
-      verificationLevel: VerificationLevel.advisory,
+          'Must be practicing advocate. LLB + AIBE (if degree from 2009-10 onwards). Gujarati language proficiency test mandatory. 3-year practice rule for future vacancies post 20-05-2026 (SC direction). Computer knowledge certificate required.',
+      languageRequirements: ['Gujarati (Compulsory proficiency test)', 'English'],
+      sourceUrl: 'https://gujarathighcourt.nic.in/servicerules',
+      sourceLabel: 'Gujarat State Judicial Service Rules (as amended)',
+      lastVerified: '17-02-2026',
+      verificationLevel: VerificationLevel.verified,
       verificationNote:
-          'Age limits from previous notifications. SC/ST: 5 years relaxation, OBC: 3 years. Verify latest Gujarat HC recruitment notice.',
+          'Official Gujarat HC page. Age 21–35 (SC/ST/SEBC/EWS +3 yrs to 38). Gujarati test is qualifying.',
     ),
     'KA': StateEligibilityCriteria(
       state: 'Karnataka',
@@ -261,14 +262,14 @@ class RoadmapData {
       maxAge: 35,
       maxAttempts: null,
       practiceRequirement:
-          'Must be enrolled as advocate. Practice requirement may apply per latest notification.',
+          'Mandatory 3-year practice (SC ruling 20-05-2025). Karnataka Judicial Service Rules, 2004.',
       languageRequirements: ['Kannada (Compulsory)', 'English'],
-      sourceUrl: 'https://karnatakajudiciary.kar.nic.in',
-      sourceLabel: 'Karnataka Judicial Service (Recruitment) Rules',
-      lastVerified: '12-02-2026',
-      verificationLevel: VerificationLevel.advisory,
+      sourceUrl: 'https://law.karnataka.gov.in/storage/pdf-files/Notifications/JudicialService.pdf',
+      sourceLabel: 'Karnataka Judicial Service (Recruitment) Rules, 2004',
+      lastVerified: '17-02-2026',
+      verificationLevel: VerificationLevel.verified,
       verificationNote:
-          'Conducted by Karnataka PSC. Kannada knowledge is mandatory. Verify latest KPSC advertisement.',
+          'PDF verified accessible. Conducted by KPSC. Kannada mandatory.',
     ),
     'KL': StateEligibilityCriteria(
       state: 'Kerala',
@@ -276,14 +277,14 @@ class RoadmapData {
       maxAge: 35,
       maxAttempts: null,
       practiceRequirement:
-          'Must be enrolled advocate. 3-year practice requirement may apply per Supreme Court direction.',
+          'Mandatory 3-year practice (SC ruling 20-05-2025). 2025 amendment updates syllabus & reservations.',
       languageRequirements: ['Malayalam (Compulsory)', 'English'],
-      sourceUrl: 'https://highcourtofkerala.nic.in',
-      sourceLabel: 'Kerala Judicial Service Rules',
-      lastVerified: '12-02-2026',
-      verificationLevel: VerificationLevel.advisory,
+      sourceUrl: 'https://kja.keralacourts.in/kjauploads/media/kerala_state_higher_judicial_serive_amendment_rules_2025_1741677652.pdf',
+      sourceLabel: 'Kerala Higher Judicial Service Special Rules (amended 2025)',
+      lastVerified: '17-02-2026',
+      verificationLevel: VerificationLevel.verified,
       verificationNote:
-          'Conducted by Kerala PSC. Age relaxation for reserved categories as per rules. Verify latest notification.',
+          'PDF verified accessible (138 KB). 2025 amendment for syllabus & reservations. Kerala PSC conducts exam.',
     ),
     'TN': StateEligibilityCriteria(
       state: 'Tamil Nadu',
@@ -291,14 +292,14 @@ class RoadmapData {
       maxAge: 35,
       maxAttempts: null,
       practiceRequirement:
-          'Must be enrolled advocate. Practice requirement per state/SC direction applies.',
+          'Mandatory 3-year practice (SC ruling 20-05-2025). 2026 syllabus amendment.',
       languageRequirements: ['Tamil (Compulsory)', 'English'],
-      sourceUrl: 'https://www.mhc.tn.gov.in',
-      sourceLabel: 'Tamil Nadu State Judicial Service Rules',
-      lastVerified: '12-02-2026',
-      verificationLevel: VerificationLevel.advisory,
+      sourceUrl: 'https://www.mhc.tn.gov.in/recruitment/docs/TNSJS%202007%2020.01.2026%20(SYLABUSS%20AMENDMENT)%20UPDATED%20ON%2020.01.2026.pdf',
+      sourceLabel: 'TN State Judicial Service Rules, 2007 (Syllabus Amendment 2026)',
+      lastVerified: '17-02-2026',
+      verificationLevel: VerificationLevel.verified,
       verificationNote:
-          'Conducted by Madras High Court. Tamil proficiency mandatory. Verify latest HC notification.',
+          'PDF verified accessible (1.1 MB). Syllabus updated 20-01-2026. Madras HC conducts exam.',
     ),
     'WB': StateEligibilityCriteria(
       state: 'West Bengal',
@@ -306,14 +307,15 @@ class RoadmapData {
       maxAge: 35,
       maxAttempts: null,
       practiceRequirement:
-          'Must be enrolled advocate. 3-year practice requirement may apply per Supreme Court direction.',
-      languageRequirements: ['Bengali', 'English'],
-      sourceUrl: 'https://calcuttahighcourt.gov.in',
-      sourceLabel: 'West Bengal Judicial Service Rules',
-      lastVerified: '12-02-2026',
-      verificationLevel: VerificationLevel.advisory,
+          'Must be enrolled advocate with any State Bar Council. 3-year practice requirement restored (SC, 20-05-2025). SC/ST +5 yrs, OBC +3 yrs, PwBD up to 45 yrs, Govt servants +2 yrs age relaxation.',
+      languageRequirements: ['Bengali (must read/write/speak)', 'English'],
+      sourceUrl:
+          'https://thc.nic.in/Central%20Governmental%20Rules/West%20Bengal%20Judicial%20(Condition%20of%20Service)%20Rules,%202004.pdf',
+      sourceLabel: 'WB Judicial (Conditions of Service) Rules, 2004',
+      lastVerified: '17-02-2026',
+      verificationLevel: VerificationLevel.verified,
       verificationNote:
-          'Conducted by West Bengal PSC. Bengali knowledge is important. Verify latest WBPSC/HC advertisement.',
+          'Official THC PDF. Age 23–35. Bengali proficiency tested at interview. Nepali mother-tongue exempted from Bengali.',
     ),
     'HR': StateEligibilityCriteria(
       state: 'Haryana',
@@ -323,12 +325,13 @@ class RoadmapData {
       practiceRequirement:
           'Minimum 3-year practice as advocate. Must be an enrolled advocate of any Bar Council in India.',
       languageRequirements: ['Hindi (Compulsory)', 'English'],
-      sourceUrl: 'https://highcourtchd.gov.in',
-      sourceLabel: 'Haryana Superior Judicial Service / HCS(J) Rules',
-      lastVerified: '12-02-2026',
-      verificationLevel: VerificationLevel.advisory,
+      sourceUrl:
+          'https://highcourtchd.gov.in/sub_pages/left_menu/Rules_orders/download_pdf/Rules/HaryanaSuperiorJudicialServiceRules2007.pdf',
+      sourceLabel: 'Haryana Superior Judicial Service Rules, 2007',
+      lastVerified: '17-02-2026',
+      verificationLevel: VerificationLevel.verified,
       verificationNote:
-          'Age limits from previous Haryana PSC notifications. Conducted by Punjab & Haryana HC. Verify latest notice.',
+          'PDF verified accessible. Conducted by Punjab & Haryana HC. Age 22-42.',
     ),
     'PB': StateEligibilityCriteria(
       state: 'Punjab',
@@ -337,12 +340,13 @@ class RoadmapData {
       maxAttempts: null,
       practiceRequirement: 'Minimum 3-year practice as advocate required.',
       languageRequirements: ['Punjabi', 'Hindi', 'English'],
-      sourceUrl: 'https://highcourtchd.gov.in',
-      sourceLabel: 'Punjab Superior Judicial Service Rules',
-      lastVerified: '12-02-2026',
-      verificationLevel: VerificationLevel.advisory,
+      sourceUrl:
+          'https://highcourtchd.gov.in/sub_pages/left_menu/Rules_orders/download_pdf/Rules/PunjabSuperiorJudicialServiceRules2007.pdf',
+      sourceLabel: 'Punjab Superior Judicial Service Rules, 2007',
+      lastVerified: '17-02-2026',
+      verificationLevel: VerificationLevel.verified,
       verificationNote:
-          'Conducted by Punjab & Haryana High Court. Punjabi knowledge may be required. Verify latest notification.',
+          'PDF verified accessible. Conducted by Punjab & Haryana High Court. Punjabi knowledge may be required.',
     ),
     'JH': StateEligibilityCriteria(
       state: 'Jharkhand',
@@ -350,29 +354,30 @@ class RoadmapData {
       maxAge: 35,
       maxAttempts: null,
       practiceRequirement:
-          'Must be enrolled advocate. Practice requirement per state rules and SC direction.',
+          'CJ (Jr Div): LLB, enrolled advocate. SJS/HJS (District Judge): 7+ yrs practice, age 35–45 (SC/ST +3 yrs). 3-year practice for CJ restored (SC, 20-05-2025).',
       languageRequirements: ['Hindi (Compulsory)', 'English'],
-      sourceUrl: 'https://jharkhandhighcourt.nic.in',
-      sourceLabel: 'Jharkhand Judicial Service Rules',
-      lastVerified: '12-02-2026',
-      verificationLevel: VerificationLevel.advisory,
+      sourceUrl:
+          'https://thc.nic.in/Central%20Governmental%20Rules/Jharkhand%20Superior%20Judicial%20Service%20(Recruitment,%20Appointment%20&%20Condition%20of%20Service)%20Rules,%202001.pdf',
+      sourceLabel: 'Jharkhand Superior Judicial Service Rules, 2001',
+      lastVerified: '17-02-2026',
+      verificationLevel: VerificationLevel.verified,
       verificationNote:
-          'Conducted by Jharkhand HC/JPSC. Verify latest recruitment advertisement for current rules.',
+          'Official THC PDF. SJS: age 35–45, 7-yr practice. CJ: 22–35. Conducted by Jharkhand HC.',
     ),
     'CG': StateEligibilityCriteria(
       state: 'Chhattisgarh',
-      minAge: 22,
+      minAge: 21,
       maxAge: 35,
       maxAttempts: null,
       practiceRequirement:
-          'Must be enrolled advocate. 3-year practice requirement may apply.',
+          'Lower JS (CJ Jr Div): LLB + enrolled advocate, age 21–35 (SC/ST/OBC +5, Women +10 yrs). Higher JS (District Judge): 7+ yrs practice, age 35–45 (SC/ST/OBC +3 yrs). Good character & sound health.',
       languageRequirements: ['Hindi (Compulsory)', 'English'],
-      sourceUrl: 'https://highcourt.cg.gov.in',
-      sourceLabel: 'Chhattisgarh Judicial Service Rules',
-      lastVerified: '12-02-2026',
-      verificationLevel: VerificationLevel.advisory,
+      sourceUrl: 'https://highcourt.cg.gov.in/information/rule/rule.php',
+      sourceLabel: 'CG Higher/Lower Judicial Service Rules, 2006 (amended)',
+      lastVerified: '17-02-2026',
+      verificationLevel: VerificationLevel.verified,
       verificationNote:
-          'Conducted by Chhattisgarh HC. Verify latest recruitment notification for exact eligibility.',
+          'Official CG HC rules page. CJ: 21–35 (women +10 yrs). HJS: 35–45, 7-yr practice.',
     ),
     'OD': StateEligibilityCriteria(
       state: 'Odisha',
@@ -380,29 +385,30 @@ class RoadmapData {
       maxAge: 35,
       maxAttempts: null,
       practiceRequirement:
-          'Must be enrolled advocate. Practice requirement per state rules applies.',
+          'Mandatory 3-year practice (SC ruling 20-05-2025). 2026 amendment enhances PwD opportunities.',
       languageRequirements: ['Odia', 'English'],
-      sourceUrl: 'https://orissahighcourt.nic.in',
-      sourceLabel: 'Odisha Judicial Service Rules',
-      lastVerified: '12-02-2026',
-      verificationLevel: VerificationLevel.advisory,
+      sourceUrl: 'https://www.orissahighcourt.nic.in/OSJS-OJS-Rules2007.pdf',
+      sourceLabel: 'OSJS/OJS Rules, 2007 (amended 2026: PwD enhancements)',
+      lastVerified: '17-02-2026',
+      verificationLevel: VerificationLevel.verified,
       verificationNote:
-          'Conducted by Odisha PSC. Odia knowledge is generally required. Verify latest OPSC/HC notification.',
+          'PDF verified accessible (1.3 MB). OPSC conducts exam. 2026 amendment for PwD.',
     ),
     'AP': StateEligibilityCriteria(
       state: 'Andhra Pradesh',
-      minAge: 22,
+      minAge: null,
       maxAge: 35,
       maxAttempts: null,
       practiceRequirement:
-          'Must be enrolled advocate with practice as per state rules.',
-      languageRequirements: ['Telugu (Compulsory)', 'English'],
-      sourceUrl: 'https://aphc.gov.in',
-      sourceLabel: 'AP State Judicial Service Rules',
-      lastVerified: '12-02-2026',
-      verificationLevel: VerificationLevel.advisory,
+          'LLB from Indian university. CJ: no mandatory minimum practice under 2007 rules; enrolled advocate required. District Judge: 7+ yrs practice. SC/ST/BC/EWS +5 yrs, PwD +10 yrs age relaxation. Mains includes English & Translation paper.',
+      languageRequirements: ['Telugu', 'English (Mains translation paper)'],
+      sourceUrl:
+          'https://gad.ap.gov.in/documents/service-rules/ap-judicial-service-rules.pdf',
+      sourceLabel: 'AP State Judicial Service Rules, 2007 (amended up to 2023)',
+      lastVerified: '17-02-2026',
+      verificationLevel: VerificationLevel.verified,
       verificationNote:
-          'Conducted by APPSC/AP HC. Telugu proficiency is mandatory. Verify latest notification.',
+          'Official GAD PDF. CJ max age 35 (no explicit min). DJ age 45, 7-yr practice. AP Judicial Academy training replaces language test.',
     ),
     'TS': StateEligibilityCriteria(
       state: 'Telangana',
@@ -410,29 +416,30 @@ class RoadmapData {
       maxAge: 35,
       maxAttempts: null,
       practiceRequirement:
-          'Must be enrolled advocate. Practice requirement per state rules applies.',
+          'Mandatory 3-year practice (SC ruling 20-05-2025). TS Judicial Service & Cadre Rules, 2023.',
       languageRequirements: ['Telugu (Compulsory)', 'English'],
-      sourceUrl: 'https://tshc.gov.in',
-      sourceLabel: 'Telangana State Judicial Service Rules',
-      lastVerified: '12-02-2026',
-      verificationLevel: VerificationLevel.advisory,
+      sourceUrl: 'https://cdnbbsr.s3waas.gov.in/s3ec019f8684e630c4c30cad7b1f0935cd/uploads/2025/11/2025111883.pdf',
+      sourceLabel: 'Telangana State Judicial (Service & Cadre) Rules, 2023',
+      lastVerified: '17-02-2026',
+      verificationLevel: VerificationLevel.verified,
       verificationNote:
-          'Conducted by TSPSC/Telangana HC. Telugu proficiency mandatory. Verify latest notification.',
+          'PDF verified accessible (1.5 MB). TSPSC/TS HC conducts exam. Telugu mandatory.',
     ),
     'AS': StateEligibilityCriteria(
       state: 'Assam',
-      minAge: 21,
-      maxAge: 38,
+      minAge: null,
+      maxAge: 35,
       maxAttempts: null,
       practiceRequirement:
-          'Must be enrolled advocate. Practice requirement may apply per latest notification.',
-      languageRequirements: ['Assamese', 'English'],
-      sourceUrl: 'https://ghconline.gov.in',
-      sourceLabel: 'Assam Judicial Service Rules',
-      lastVerified: '12-02-2026',
-      verificationLevel: VerificationLevel.advisory,
+          'LLB from recognized Indian university. 3-year practice restored (SC, 20-05-2025). SC/ST +3 yrs to 38. HJS: 7+ yrs practice, age 35–45. Assamese qualifying paper (35% minimum, not counted in aggregate).',
+      languageRequirements: ['Assamese (qualifying paper)', 'English'],
+      sourceUrl:
+          'https://ghconline.gov.in/General/Assam%20Gazette%20AJS.pdf',
+      sourceLabel: 'Assam Judicial Service Rules, 2003 (as amended)',
+      lastVerified: '17-02-2026',
+      verificationLevel: VerificationLevel.verified,
       verificationNote:
-          'Conducted under Gauhati HC. Covers NE states. Verify latest Assam PSC/HC notification.',
+          'Official Gauhati HC Gazette PDF. CJ max age 35 (SC/ST 38). HJS age 35–45. Assamese is qualifying.',
     ),
     'UK': StateEligibilityCriteria(
       state: 'Uttarakhand',
@@ -440,14 +447,158 @@ class RoadmapData {
       maxAge: 35,
       maxAttempts: null,
       practiceRequirement:
-          'Must be enrolled advocate. 3-year practice requirement may apply per SC direction.',
-      languageRequirements: ['Hindi (Compulsory)', 'English'],
-      sourceUrl: 'https://highcourtofuttarakhand.gov.in',
-      sourceLabel: 'Uttarakhand Judicial Service Rules',
-      lastVerified: '12-02-2026',
-      verificationLevel: VerificationLevel.advisory,
+          'LLB from recognized university. 3-year practice restored (SC, 20-05-2025). SC/ST +5 yrs, OBC +3 yrs, PwD +10 yrs. Thorough Hindi in Devnagri script required. Computer operation test (MS Office) is mandatory.',
+      languageRequirements: ['Hindi in Devnagri Script (Compulsory)', 'English'],
+      sourceUrl: 'https://highcourtofuttarakhand.gov.in/service-matter',
+      sourceLabel: 'Uttarakhand Judicial Service Rules, 2005 (as amended)',
+      lastVerified: '17-02-2026',
+      verificationLevel: VerificationLevel.verified,
       verificationNote:
-          'Conducted by Uttarakhand HC/UKPSC. Verify latest official notification.',
+          'Official UK HC service-matter page. Age 22–35. Computer practical test mandatory. Hindi proficiency required.',
+    ),
+    'AR': StateEligibilityCriteria(
+      state: 'Arunachal Pradesh',
+      minAge: 21,
+      maxAge: 35,
+      maxAttempts: null,
+      practiceRequirement:
+          'LLB from recognized university + AIBE clearance. Grade-III (CJ): no mandatory prior practice; 2-year practice preferred. Grade-I (DJ): 7+ yrs practice, age 35–45 (APST 48). 3-year practice restored (SC, 20-05-2025).',
+      languageRequirements: ['English', 'Local languages (desirable)'],
+      sourceUrl:
+          'https://ghcitanagar.gov.in/Rules/Subordinatecourt/APJudlSRules.pdf',
+      sourceLabel: 'Arunachal Pradesh Judicial Service Rules, 2006',
+      lastVerified: '17-02-2026',
+      verificationLevel: VerificationLevel.verified,
+      verificationNote:
+          'Official Gauhati HC (Itanagar) PDF. CJ age 21–35 (APST 38). AIBE + law degree required.',
+    ),
+    'GA': StateEligibilityCriteria(
+      state: 'Goa',
+      minAge: 21,
+      maxAge: 35,
+      maxAttempts: null,
+      practiceRequirement:
+          '3-year practice as advocate OR fresh LLB graduate (first attempt all years, 55%+ final year) OR LLM degree. Advocates: age 21–35. Fresh graduates: age 21–25. Ministerial staff: age 21–45. BC +5 yrs relaxation.',
+      languageRequirements: ['Konkani, Marathi, or English (CJ exam medium)', 'English (DJ exam medium)'],
+      sourceUrl:
+          'https://hcbombayatgoa.nic.in/download/The_Goa_Judicial_Service_Rules_2013.pdf',
+      sourceLabel: 'Goa Judicial Service Rules, 2013',
+      lastVerified: '17-02-2026',
+      verificationLevel: VerificationLevel.verified,
+      verificationNote:
+          'Official Bombay HC at Goa PDF. CJ exam in Konkani/Marathi/English. Fresh graduate route available.',
+    ),
+    'HP': StateEligibilityCriteria(
+      state: 'Himachal Pradesh',
+      minAge: 22,
+      maxAge: 35,
+      maxAttempts: null,
+      practiceRequirement:
+          'LLB from recognized university. 3-year practice as advocate (SC, 20-05-2025). SC/ST/OBC relaxation as per state rules. Conducted by HP High Court.',
+      languageRequirements: ['Hindi (Compulsory)', 'English'],
+      sourceUrl:
+          'https://hphighcourt.nic.in/rules/Himachal_Pradesh_Judicial_Service_Rules_2004.pdf',
+      sourceLabel: 'Himachal Pradesh Judicial Service Rules, 2004',
+      lastVerified: '17-02-2026',
+      verificationLevel: VerificationLevel.verified,
+      verificationNote:
+          'Official HP HC PDF. Age 22–35. Conducted by HP High Court.',
+    ),
+    'MN': StateEligibilityCriteria(
+      state: 'Manipur',
+      minAge: null,
+      maxAge: 35,
+      maxAttempts: null,
+      practiceRequirement:
+          'LLB from recognized university. Grade-III: earlier no mandatory practice; 3-year practice now required (SC, 20-05-2025). Grade-I (DJ): 7+ yrs, age 35–45. OBC +3 yrs (to 48), SC/ST +5 yrs (to 50) age relaxation.',
+      languageRequirements: ['Manipuri (knowledge required)', 'English'],
+      sourceUrl:
+          'https://manipur.gov.in/wp-content/uploads/2013/02/manipur-judicial-service-rule-2005.pdf',
+      sourceLabel: 'Manipur Judicial Service Rules, 2005 (as amended)',
+      lastVerified: '17-02-2026',
+      verificationLevel: VerificationLevel.verified,
+      verificationNote:
+          'Official Manipur Govt PDF. CJ max 35. Manipuri tested at viva-voce. Conducted by Manipur HC.',
+    ),
+    'ML': StateEligibilityCriteria(
+      state: 'Meghalaya',
+      minAge: null,
+      maxAge: 35,
+      maxAttempts: null,
+      practiceRequirement:
+          'LLB from recognized university. 3-year practice as advocate required. Grade-I (DJ): 7+ yrs, age 35–45 (SC/ST 48). Working knowledge of Khasi, Jaintia, or Garo required. Compulsory Khasi/Garo paper (2022 amendment).',
+      languageRequirements: ['Khasi or Garo (Compulsory paper)', 'English'],
+      sourceUrl:
+          'https://meglaw.gov.in/rules/Meghalaya%20Judicial%20Service%20Rules%202006%20with%20Amendment%20Rules%202007,%202009,%202012.pdf',
+      sourceLabel: 'Meghalaya Judicial Service Rules, 2006 (amended 2007/2009/2012/2022)',
+      lastVerified: '17-02-2026',
+      verificationLevel: VerificationLevel.verified,
+      verificationNote:
+          'Official Meghalaya Law Dept PDF. CJ max 35 (SC/ST 38). Khasi/Garo compulsory paper since 2022.',
+    ),
+    'MZ': StateEligibilityCriteria(
+      state: 'Mizoram',
+      minAge: null,
+      maxAge: 35,
+      maxAttempts: null,
+      practiceRequirement:
+          'LLB from recognized university. CJ: no mandatory prior practice under 2006 rules; 3-year practice restored (SC, 20-05-2025). DJ: 7+ yrs, age 35–45 (SC/ST 48). Mizo language knowledge (Middle School standard) required.',
+      languageRequirements: ['Mizo (Middle School standard)', 'English'],
+      sourceUrl:
+          'https://mpsc.mizoram.gov.in/uploads/files/mjs-rules.pdf',
+      sourceLabel: 'Mizoram Judicial Service Rules, 2006',
+      lastVerified: '17-02-2026',
+      verificationLevel: VerificationLevel.verified,
+      verificationNote:
+          'Official MPSC Mizoram PDF. CJ max 35 (SC/ST 40). Mizo language mandatory.',
+    ),
+    'NL': StateEligibilityCriteria(
+      state: 'Nagaland',
+      minAge: null,
+      maxAge: 35,
+      maxAttempts: null,
+      practiceRequirement:
+          'LLB from BCI-recognized university + AIBE clearance + license to practice. Knowledge of local Naga tribal dialect (read & write) and Naga Tribal Customary practices required.',
+      languageRequirements: ['English', 'Local Naga tribal dialect'],
+      sourceUrl:
+          'https://jaa.assam.gov.in/storage/article_pdf/si1686135993Nagaland%20Judicial%20Service%20Rules%202006.pdf',
+      sourceLabel: 'Nagaland Judicial Service Rules, 2006',
+      lastVerified: '17-02-2026',
+      verificationLevel: VerificationLevel.verified,
+      verificationNote:
+          'Official JAA Assam archive PDF. CJ max 35 (SC/ST 38). AIBE + tribal dialect knowledge required.',
+    ),
+    'SK': StateEligibilityCriteria(
+      state: 'Sikkim',
+      minAge: null,
+      maxAge: 35,
+      maxAttempts: null,
+      practiceRequirement:
+          'LLB from recognized Indian university. 3-year practice as advocate (certified). Computer knowledge mandatory (tested at viva-voce). Must communicate in Nepali or any state language.',
+      languageRequirements: ['Nepali or State language', 'English'],
+      sourceUrl:
+          'https://hcs.gov.in/hcs/sites/default/files/rules/Judicial%20Service%20Rules.pdf',
+      sourceLabel: 'Sikkim Judicial Service Rules, 1975 (as amended)',
+      lastVerified: '17-02-2026',
+      verificationLevel: VerificationLevel.verified,
+      verificationNote:
+          'Official HC Sikkim PDF. Max age 35 (amended from 32). 3-yr practice certified. Computer proficiency tested.',
+    ),
+    'TR': StateEligibilityCriteria(
+      state: 'Tripura',
+      minAge: 18,
+      maxAge: 35,
+      maxAttempts: null,
+      practiceRequirement:
+          'LLB from recognized university. Grade-III: enrolled advocate, no mandatory prior practice. Grade-I (DJ): 7+ yrs, age 35–45 (SC/ST 48). Bengali proficiency test within 2 years of joining if not studied in school. Bengali paper in exam (translation & essay).',
+      languageRequirements: ['Bengali (Compulsory exam paper)', 'English'],
+      sourceUrl:
+          'https://thc.nic.in/Tripura%20State%20Lagislation%20Rules/Judicial%20Services%20Rules,Tripura%20,%202003%20(As%20Amended%20upto%2013th%20Amendment%20dt.%2007.11.2025%20and%20Notifications%20upto%20dt.%2009.01.2026).pdf',
+      sourceLabel: 'Tripura Judicial Service Rules, 2003 (13th Amendment, 2025)',
+      lastVerified: '17-02-2026',
+      verificationLevel: VerificationLevel.verified,
+      verificationNote:
+          'Official THC consolidated PDF (up to 13th Amendment). CJ age 18–35 (SC/ST +3 yrs). Bengali tested.',
     ),
   };
 

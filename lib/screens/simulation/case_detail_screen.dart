@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../../l10n/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
 
@@ -249,7 +248,7 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
                   ),
                 ],
               ),
-            ).animate().fadeIn(),
+),
 
             const SizedBox(height: 24),
 
@@ -259,7 +258,7 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
               style: Theme.of(
                 context,
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-            ).animate(delay: 100.ms).fadeIn(),
+),
 
             const SizedBox(height: 12),
 
@@ -277,7 +276,7 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
                   context,
                 ).textTheme.bodyMedium?.copyWith(height: 1.6),
               ),
-            ).animate(delay: 150.ms).fadeIn(),
+),
 
             const SizedBox(height: 20),
 
@@ -287,7 +286,7 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
               style: Theme.of(
                 context,
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-            ).animate(delay: 200.ms).fadeIn(),
+),
 
             const SizedBox(height: 12),
 
@@ -314,12 +313,7 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
                         ),
                       ],
                     ),
-                  )
-                  .animate(
-                    delay: Duration(milliseconds: 250 + (entry.key * 50)),
-                  )
-                  .fadeIn()
-                  .slideX(begin: 0.1, end: 0);
+                  );
             }),
 
             const SizedBox(height: 24),
@@ -330,7 +324,7 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
               style: Theme.of(
                 context,
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-            ).animate(delay: 400.ms).fadeIn(),
+            ),
 
             const SizedBox(height: 12),
 
@@ -423,11 +417,7 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
                         ],
                       ),
                     ),
-                  )
-                  .animate(
-                    delay: Duration(milliseconds: 450 + (entry.key * 50)),
-                  )
-                  .fadeIn();
+                  );
             }),
 
             const SizedBox(height: 20),
@@ -453,7 +443,7 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
                     ),
                   ),
                 ),
-              ).animate(delay: 600.ms).fadeIn()
+              )
             else ...[
               // Explanation Card
               Container(
@@ -489,7 +479,7 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
                     ),
                   ],
                 ),
-              ).animate().fadeIn().slideY(begin: 0.1, end: 0),
+),
 
               const SizedBox(height: 16),
 

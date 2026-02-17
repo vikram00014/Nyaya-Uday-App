@@ -7,6 +7,7 @@ import '../../config/app_theme.dart';
 import '../../models/state_catalog.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/locale_provider.dart';
+import '../../providers/llb_pathway_provider.dart';
 import '../../services/groq_service.dart';
 import 'achievements_screen.dart';
 
@@ -43,6 +44,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  String _getInitials(String? name) {
+    if (name == null || name.trim().isEmpty) return '?';
+    final parts = name.trim().split(RegExp(r'\s+'));
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    return parts[0][0].toUpperCase();
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -77,10 +87,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: ListView(
+        physics: const ClampingScrollPhysics(),
         padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
+        children: [
             // Profile Header
             Container(
               width: double.infinity,
@@ -91,17 +101,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               child: Column(
                 children: [
-                  // User Avatar
+                  // User Avatar with Initials
                   Container(
                     width: 80,
                     height: 80,
                     decoration: BoxDecoration(
-                      color: Colors.white,
                       shape: BoxShape.circle,
-                      border: Border.all(color: AppTheme.accentColor, width: 3),
+                      gradient: LinearGradient(
+                        colors: [AppTheme.accentColor, Colors.amber.shade300],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      border: Border.all(color: Colors.white, width: 3),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.accentColor.withAlpha(60),
+                          blurRadius: 12,
+                          spreadRadius: 2,
+                        ),
+                      ],
                     ),
-                    child: const Center(
-                      child: Text('👤', style: TextStyle(fontSize: 40)),
+                    child: Center(
+                      child: Text(
+                        _getInitials(userProvider.displayName),
+                        style: const TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -147,7 +175,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ],
               ),
-            ).animate().fadeIn().slideY(begin: -0.1, end: 0),
+            ).animate().fadeIn(duration: 300.ms).slideY(begin: -0.1, end: 0),
 
             const SizedBox(height: 24),
 
@@ -170,7 +198,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
               ],
-            ).animate(delay: 100.ms).fadeIn(),
+            ).animate(delay: 60.ms).fadeIn(duration: 250.ms),
 
             const SizedBox(height: 12),
 
@@ -196,7 +224,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
               ],
-            ).animate(delay: 150.ms).fadeIn(),
+            ).animate(delay: 100.ms).fadeIn(duration: 250.ms),
 
             const SizedBox(height: 12),
 
@@ -225,7 +253,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
               ],
-            ).animate(delay: 200.ms).fadeIn(),
+            ).animate(delay: 120.ms).fadeIn(duration: 250.ms),
 
             const SizedBox(height: 24),
 
@@ -235,7 +263,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               style: Theme.of(
                 context,
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-            ).animate(delay: 250.ms).fadeIn(),
+            ).animate(delay: 140.ms).fadeIn(duration: 250.ms),
             const SizedBox(height: 12),
             Container(
               width: double.infinity,
@@ -332,7 +360,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ],
               ),
-            ).animate(delay: 300.ms).fadeIn(),
+            ).animate(delay: 160.ms).fadeIn(duration: 250.ms),
 
             const SizedBox(height: 24),
 
@@ -394,7 +422,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
               ),
-            ).animate(delay: 200.ms).fadeIn(),
+            ).animate(delay: 130.ms).fadeIn(duration: 250.ms),
 
             const SizedBox(height: 24),
 
@@ -442,21 +470,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   );
                 }).toList(),
-              ).animate(delay: 300.ms).fadeIn(),
+              ).animate(delay: 160.ms).fadeIn(duration: 250.ms),
             ],
 
             const SizedBox(height: 24),
 
             // ── Settings Section ────────────────────────────
             _buildSettingsSection(context, isHindi),
-          ],
-        ),
+        ],
       ),
     );
   }
 
   // ── Settings Section UI ───────────────────────────────────
   Widget _buildSettingsSection(BuildContext context, bool isHindi) {
+    final pathwayProvider = context.watch<LlbPathwayProvider>();
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -470,8 +499,58 @@ class _ProfileScreenState extends State<ProfileScreen> {
               context,
             ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
-        ).animate(delay: 350.ms).fadeIn(),
+        ).animate(delay: 180.ms).fadeIn(duration: 250.ms),
         const SizedBox(height: 12),
+        
+        // ── LLB Pathway Setting ─────────────────────────────
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          child: ListTile(
+            leading: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withAlpha(25),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Center(
+                child: Text(
+                  pathwayProvider.selectedPathway?.icon ?? '📚',
+                  style: const TextStyle(fontSize: 20),
+                ),
+              ),
+            ),
+            title: Text(
+              isHindi ? 'LLB पाठ्यक्रम' : 'LLB Pathway',
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            subtitle: Text(
+              pathwayProvider.hasSelectedPathway
+                  ? pathwayProvider.getDisplayName(isHindi)
+                  : (isHindi ? 'चुना नहीं गया' : 'Not selected'),
+              style: TextStyle(
+                fontSize: 12,
+                color: pathwayProvider.hasSelectedPathway
+                    ? AppTheme.textSecondary
+                    : Colors.orange.shade700,
+              ),
+            ),
+            trailing: Icon(
+              Icons.arrow_forward_ios,
+              size: 14,
+              color: AppTheme.textSecondary,
+            ),
+            onTap: () => _showPathwayChangeDialog(context, isHindi),
+          ),
+        ).animate(delay: 200.ms).fadeIn(duration: 250.ms),
+        
+        const SizedBox(height: 16),
+        
         // Hidden developer label — only visible after long-press
         if (_showApiPanel)
           Container(
@@ -628,6 +707,151 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ).animate(delay: 400.ms).fadeIn(),
         ], // end of _showApiPanel
       ],
+    );
+  }
+
+  void _showPathwayChangeDialog(BuildContext context, bool isHindi) {
+    final pathwayProvider = context.read<LlbPathwayProvider>();
+    LlbPathway? selectedPathway = pathwayProvider.selectedPathway;
+    
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: Text(
+            isHindi ? 'LLB पाठ्यक्रम बदलें' : 'Change LLB Pathway',
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                isHindi
+                    ? 'अपना LLB कोर्स चुनें:'
+                    : 'Select your LLB course:',
+                style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+              ),
+              const SizedBox(height: 16),
+              
+              // 5-Year LLB option
+              _buildPathwayOption(
+                pathway: LlbPathway.fiveYear,
+                isSelected: selectedPathway == LlbPathway.fiveYear,
+                isHindi: isHindi,
+                onTap: () {
+                  setDialogState(() => selectedPathway = LlbPathway.fiveYear);
+                },
+              ),
+              const SizedBox(height: 12),
+              
+              // 3-Year LLB option
+              _buildPathwayOption(
+                pathway: LlbPathway.threeYear,
+                isSelected: selectedPathway == LlbPathway.threeYear,
+                isHindi: isHindi,
+                onTap: () {
+                  setDialogState(() => selectedPathway = LlbPathway.threeYear);
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text(isHindi ? 'रद्द करें' : 'Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: selectedPathway != null
+                  ? () async {
+                      await pathwayProvider.setPathway(selectedPathway!);
+                      if (ctx.mounted) Navigator.of(ctx).pop();
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              isHindi
+                                  ? '✅ LLB पाठ्यक्रम अपडेट हो गया!'
+                                  : '✅ LLB pathway updated!',
+                            ),
+                            backgroundColor: Colors.green.shade600,
+                          ),
+                        );
+                      }
+                    }
+                  : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor,
+              ),
+              child: Text(
+                isHindi ? 'सहेजें' : 'Save',
+                style: const TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildPathwayOption({
+    required LlbPathway pathway,
+    required bool isSelected,
+    required bool isHindi,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppTheme.primaryColor.withAlpha(25)
+              : Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? AppTheme.primaryColor : Colors.grey.shade200,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Text(
+              pathway.icon,
+              style: const TextStyle(fontSize: 24),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    isHindi ? pathway.displayNameHindi : pathway.displayName,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: isSelected
+                          ? AppTheme.primaryColor
+                          : AppTheme.textPrimary,
+                    ),
+                  ),
+                  Text(
+                    isHindi ? pathway.descriptionHindi : pathway.description,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: AppTheme.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (isSelected)
+              Icon(
+                Icons.check_circle,
+                color: AppTheme.primaryColor,
+                size: 20,
+              ),
+          ],
+        ),
+      ),
     );
   }
 

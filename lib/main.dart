@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'l10n/generated/app_localizations.dart';
 
@@ -8,13 +9,18 @@ import 'config/app_theme.dart';
 import 'providers/user_provider.dart';
 import 'providers/locale_provider.dart';
 import 'providers/simulation_provider.dart';
+import 'providers/llb_pathway_provider.dart';
 import 'screens/splash_screen.dart';
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Set preferred orientations
-  await SystemChrome.setPreferredOrientations([
+  // Allow Google Fonts runtime fetching (fonts cached after first load)
+  // For production: bundle fonts in assets and set to false
+  GoogleFonts.config.allowRuntimeFetching = true;
+
+  // Set preferred orientations (fire-and-forget so runApp isn't delayed)
+  SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
@@ -32,6 +38,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => LocaleProvider()),
         ChangeNotifierProvider(create: (_) => SimulationProvider()),
+        ChangeNotifierProvider(create: (_) => LlbPathwayProvider()),
       ],
       child: Consumer<LocaleProvider>(
         builder: (context, localeProvider, child) {

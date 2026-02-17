@@ -267,10 +267,22 @@ class UserProvider extends ChangeNotifier {
   // ── Roadmap step progress ──────────────────────────────────
   bool isStepCompleted(int stepOrder) => _completedSteps.contains(stepOrder);
 
+  /// Returns true if step [stepOrder] can be toggled on (i.e. all previous
+  /// steps are already completed).
+  bool canCompleteStep(int stepOrder) {
+    for (int i = 1; i < stepOrder; i++) {
+      if (!_completedSteps.contains(i)) return false;
+    }
+    return true;
+  }
+
   Future<void> toggleStepCompletion(int stepOrder) async {
     if (_completedSteps.contains(stepOrder)) {
-      _completedSteps.remove(stepOrder);
+      // Unchecking — also remove all later steps
+      _completedSteps.removeWhere((s) => s >= stepOrder);
     } else {
+      // Checking — only allow if all previous steps are done
+      if (!canCompleteStep(stepOrder)) return;
       _completedSteps.add(stepOrder);
     }
     final prefs = await SharedPreferences.getInstance();

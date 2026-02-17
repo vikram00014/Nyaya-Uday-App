@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../../l10n/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../config/app_theme.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/locale_provider.dart';
+import '../../providers/llb_pathway_provider.dart';
 import '../roadmap/roadmap_screen.dart';
 import '../simulation/case_list_screen.dart';
 import '../learn/legal_modules_screen.dart';
@@ -25,23 +25,54 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
 
+  // Lazy-loaded tab cache: only build tabs when first visited
+  final Map<int, Widget> _tabCache = {};
+
+  Widget _buildTab(int index, bool isHindi) {
+    if (_tabCache.containsKey(index)) return _tabCache[index]!;
+
+    final userProvider = context.read<UserProvider>();
+    late Widget tab;
+    switch (index) {
+      case 0:
+        tab = _HomeContent(userProvider: userProvider, isHindi: isHindi);
+        break;
+      case 1:
+        tab = const RoadmapScreen();
+        break;
+      case 2:
+        tab = const CaseListScreen();
+        break;
+      case 3:
+        tab = const LegalModulesScreen();
+        break;
+      case 4:
+        tab = const ProfileScreen();
+        break;
+      default:
+        tab = const SizedBox.shrink();
+    }
+    _tabCache[index] = tab;
+    return tab;
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final userProvider = context.watch<UserProvider>();
     final localeProvider = context.watch<LocaleProvider>();
     final isHindi = localeProvider.locale.languageCode == 'hi';
 
+    // Always keep home tab updated since it reads provider
+    if (_currentIndex == 0) {
+      _tabCache[0] = _HomeContent(
+        userProvider: context.watch<UserProvider>(),
+        isHindi: isHindi,
+      );
+    }
+
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: [
-          _HomeContent(userProvider: userProvider, isHindi: isHindi),
-          const RoadmapScreen(),
-          const CaseListScreen(),
-          const LegalModulesScreen(),
-          const ProfileScreen(),
-        ],
+      body: RepaintBoundary(
+        child: _buildTab(_currentIndex, isHindi),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
@@ -51,6 +82,7 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         },
         backgroundColor: AppTheme.accentColor,
+        elevation: 6,
         icon: const Icon(Icons.support_agent, color: Colors.white),
         label: Text(
           isHindi ? 'सहायक' : 'Ask',
@@ -60,55 +92,138 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha(20),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) => setState(() => _currentIndex = index),
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: AppTheme.primaryColor,
-          unselectedItemColor: AppTheme.textSecondary,
-          items: [
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.home_outlined),
-              activeIcon: const Icon(Icons.home),
-              label: l10n.home,
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.map_outlined),
-              activeIcon: const Icon(Icons.map),
-              label: isHindi ? 'रोडमैप' : 'Roadmap',
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.gavel_outlined),
-              activeIcon: const Icon(Icons.gavel),
-              label: isHindi ? 'सिमुलेशन' : 'Simulate',
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.school_outlined),
-              activeIcon: const Icon(Icons.school),
-              label: l10n.learn,
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.person_outline),
-              activeIcon: const Icon(Icons.person),
-              label: l10n.profile,
-            ),
-          ],
+      bottomNavigationBar: _ModernBottomNav(
+        currentIndex: _currentIndex,
+        isHindi: isHindi,
+        l10n: l10n,
+        onTap: (index) => setState(() => _currentIndex = index),
+      ),
+    );
+  }
+}
+
+// ── Modern Bottom Navigation Bar ────────────────────────────
+class _ModernBottomNav extends StatelessWidget {
+  final int currentIndex;
+  final bool isHindi;
+  final AppLocalizations l10n;
+  final ValueChanged<int> onTap;
+
+  const _ModernBottomNav({
+    required this.currentIndex,
+    required this.isHindi,
+    required this.l10n,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final items = [
+      _NavItem(Icons.home_outlined, Icons.home_rounded, l10n.home),
+      _NavItem(Icons.map_outlined, Icons.map_rounded,
+          isHindi ? 'रोडमैप' : 'Roadmap'),
+      _NavItem(Icons.gavel_outlined, Icons.gavel_rounded,
+          isHindi ? 'सिमुलेशन' : 'Simulate'),
+      _NavItem(Icons.school_outlined, Icons.school_rounded, l10n.learn),
+      _NavItem(Icons.person_outline_rounded, Icons.person_rounded, l10n.profile),
+    ];
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primaryColor.withAlpha(15),
+            blurRadius: 20,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: List.generate(items.length, (i) {
+              final selected = i == currentIndex;
+              final item = items[i];
+              return Expanded(
+                child: InkWell(
+                  onTap: () => onTap(i),
+                  borderRadius: BorderRadius.circular(16),
+                  splashColor: AppTheme.primaryColor.withAlpha(20),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeInOut,
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? AppTheme.primaryColor.withAlpha(15)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 200),
+                          child: Icon(
+                            selected ? item.activeIcon : item.icon,
+                            key: ValueKey(selected),
+                            color: selected
+                                ? AppTheme.primaryColor
+                                : AppTheme.textSecondary,
+                            size: selected ? 26 : 24,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          item.label,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight:
+                                selected ? FontWeight.w700 : FontWeight.w400,
+                            color: selected
+                                ? AppTheme.primaryColor
+                                : AppTheme.textSecondary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 250),
+                          width: selected ? 20 : 0,
+                          height: 3,
+                          decoration: BoxDecoration(
+                            color: selected
+                                ? AppTheme.primaryColor
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
         ),
       ),
     );
   }
 }
 
+class _NavItem {
+  final IconData icon;
+  final IconData activeIcon;
+  final String label;
+  const _NavItem(this.icon, this.activeIcon, this.label);
+}
+
+// ── Home Content ────────────────────────────────────────────
 class _HomeContent extends StatelessWidget {
   final UserProvider userProvider;
   final bool isHindi;
@@ -121,114 +236,133 @@ class _HomeContent extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
 
     return SafeArea(
-      child: SingleChildScrollView(
+      child: ListView(
+        physics: const ClampingScrollPhysics(),
         padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+        children: [
             // Header
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      isHindi
-                          ? 'नमस्ते${userProvider.displayName != null ? ', ${userProvider.displayName}' : ''}! 🙏'
-                          : 'Namaste${userProvider.displayName != null ? ', ${userProvider.displayName}' : ''}! 🙏',
-                      style: Theme.of(context).textTheme.headlineMedium
-                          ?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.primaryColor,
-                          ),
-                    ),
-                    Text(
-                      isHindi
-                          ? 'आपकी न्यायिक यात्रा जारी है'
-                          : 'Your judicial journey continues',
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: AppTheme.textSecondary,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isHindi
+                            ? 'नमस्ते${userProvider.displayName != null ? ', ${userProvider.displayName}' : ''}! 🙏'
+                            : 'Namaste${userProvider.displayName != null ? ', ${userProvider.displayName}' : ''}! 🙏',
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineMedium
+                            ?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.primaryColor,
+                            ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 2),
+                      Text(
+                        isHindi
+                            ? 'आपकी न्यायिक यात्रा जारी है'
+                            : 'Your judicial journey continues',
+                        style:
+                            Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: AppTheme.textSecondary,
+                                ),
+                      ),
+                      const SizedBox(height: 8),
+                      // LLB Pathway Badge
+                      _PathwayBadge(isHindi: isHindi),
+                    ],
+                  ),
                 ),
                 // Language Toggle
-                IconButton(
-                  onPressed: () {
+                GestureDetector(
+                  onTap: () {
                     context.read<LocaleProvider>().toggleLocale();
                   },
-                  icon: Container(
-                    padding: const EdgeInsets.all(8),
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryColor.withAlpha(25),
-                      borderRadius: BorderRadius.circular(10),
+                      gradient: LinearGradient(
+                        colors: [
+                          AppTheme.primaryColor.withAlpha(20),
+                          AppTheme.primaryColor.withAlpha(10),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: AppTheme.primaryColor.withAlpha(30),
+                      ),
                     ),
                     child: Text(
                       isHindi ? 'EN' : 'हि',
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         color: AppTheme.primaryColor,
+                        fontSize: 15,
                       ),
                     ),
                   ),
                 ),
               ],
-            ).animate().fadeIn().slideY(begin: -0.1, end: 0),
+            ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
 
             // Score Card
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                gradient: AppTheme.primaryGradient,
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF1A237E), Color(0xFF3949AB)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: AppTheme.primaryColor.withAlpha(60),
-                    blurRadius: 15,
-                    offset: const Offset(0, 8),
+                    color: AppTheme.primaryColor.withAlpha(40),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
                   ),
                 ],
               ),
-              child: Column(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _ScoreItem(
-                        icon: '⚖️',
-                        value: '${user?.totalScore ?? 0}',
-                        label: l10n.totalScore,
-                      ),
-                      Container(
-                        width: 1,
-                        height: 50,
-                        color: Colors.white.withAlpha(50),
-                      ),
-                      _ScoreItem(
-                        icon: '📋',
-                        value: '${user?.casesCompleted ?? 0}',
-                        label: l10n.casesCompleted,
-                      ),
-                      Container(
-                        width: 1,
-                        height: 50,
-                        color: Colors.white.withAlpha(50),
-                      ),
-                      _ScoreItem(
-                        icon: '🏆',
-                        value: user?.rank ?? 'Trainee',
-                        label: l10n.rank,
-                        isSmallValue: true,
-                      ),
-                    ],
+                  _ScoreItem(
+                    icon: '⚖️',
+                    value: '${user?.totalScore ?? 0}',
+                    label: l10n.totalScore,
+                  ),
+                  Container(
+                    width: 1,
+                    height: 50,
+                    color: Colors.white.withAlpha(40),
+                  ),
+                  _ScoreItem(
+                    icon: '📋',
+                    value: '${user?.casesCompleted ?? 0}',
+                    label: l10n.casesCompleted,
+                  ),
+                  Container(
+                    width: 1,
+                    height: 50,
+                    color: Colors.white.withAlpha(40),
+                  ),
+                  _ScoreItem(
+                    icon: '🏆',
+                    value: user?.rank ?? 'Trainee',
+                    label: l10n.rank,
+                    isSmallValue: true,
                   ),
                 ],
               ),
-            ).animate(delay: 200.ms).fadeIn().slideY(begin: 0.1, end: 0),
+            ),
 
             const SizedBox(height: 16),
 
@@ -236,168 +370,88 @@ class _HomeContent extends StatelessWidget {
             _StudyStreakCard(
               streakDays: userProvider.streakDays,
               isHindi: isHindi,
-            ).animate(delay: 250.ms).fadeIn().slideY(begin: 0.1, end: 0),
+            ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
 
-            _DailyTipCard(
-              isHindi: isHindi,
-            ).animate(delay: 280.ms).fadeIn().slideY(begin: 0.1, end: 0),
+            _DailyTipCard(isHindi: isHindi),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 22),
 
             // Quick Actions
             Text(
               isHindi ? 'तेज़ कार्रवाई' : 'Quick Actions',
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-            ).animate(delay: 300.ms).fadeIn(),
+              style: Theme.of(context)
+                  .textTheme
+                  .titleLarge
+                  ?.copyWith(fontWeight: FontWeight.bold),
+            ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
 
-            Row(
-              children: [
-                Expanded(
-                  child: _QuickActionCard(
-                    icon: '🗺️',
-                    title: isHindi ? 'मेरा रोडमैप' : 'My Roadmap',
-                    subtitle: isHindi ? 'करियर पथ देखें' : 'View career path',
-                    color: AppTheme.primaryColor,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const RoadmapScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _QuickActionCard(
-                    icon: '⚖️',
-                    title: l10n.juniorJudge,
-                    subtitle: l10n.trySimulation,
-                    color: AppTheme.accentDark,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const CaseListScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ).animate(delay: 400.ms).fadeIn().slideY(begin: 0.1, end: 0),
+            // Quick action grid — 2 columns
+            _buildQuickActionRow(context, [
+              _QuickActionData(
+                icon: '🗺️',
+                title: isHindi ? 'मेरा रोडमैप' : 'My Roadmap',
+                subtitle: isHindi ? 'करियर पथ देखें' : 'View career path',
+                color: AppTheme.primaryColor,
+                screen: const RoadmapScreen(),
+              ),
+              _QuickActionData(
+                icon: '⚖️',
+                title: l10n.juniorJudge,
+                subtitle: l10n.trySimulation,
+                color: AppTheme.accentDark,
+                screen: const CaseListScreen(),
+              ),
+            ]),
+            const SizedBox(height: 12),
+            _buildQuickActionRow(context, [
+              _QuickActionData(
+                icon: '📚',
+                title: l10n.legalLiteracy,
+                subtitle: l10n.shortModules,
+                color: AppTheme.successColor,
+                screen: const LegalModulesScreen(),
+              ),
+              _QuickActionData(
+                icon: '🏅',
+                title: l10n.leaderboard,
+                subtitle: isHindi ? 'अपनी रैंक देखें' : 'See your rank',
+                color: AppTheme.warningColor,
+                screen: const LeaderboardScreen(),
+              ),
+            ]),
+            const SizedBox(height: 12),
+            _buildQuickActionRow(context, [
+              _QuickActionData(
+                icon: '📝',
+                title: isHindi ? 'मेरे नोट्स' : 'My Notes',
+                subtitle: isHindi ? 'नोट्स लिखें' : 'Write notes',
+                color: Colors.indigo,
+                screen: const NotesScreen(),
+              ),
+              _QuickActionData(
+                icon: '📖',
+                title: isHindi ? 'कानूनी शब्दकोश' : 'Glossary',
+                subtitle: isHindi ? 'शब्द खोजें' : 'Legal terms',
+                color: Colors.brown,
+                screen: const LegalGlossaryScreen(),
+              ),
+            ]),
+            const SizedBox(height: 12),
+            _buildQuickActionRow(context, [
+              _QuickActionData(
+                icon: '🤖',
+                title: isHindi ? 'AI सहायक' : 'AI Assistant',
+                subtitle: isHindi ? 'प्रश्न पूछें' : 'Ask questions',
+                color: Colors.deepPurple,
+                screen: const FaqAssistantScreen(),
+              ),
+            ]),
 
-            const SizedBox(height: 16),
-
-            Row(
-              children: [
-                Expanded(
-                  child: _QuickActionCard(
-                    icon: '📚',
-                    title: l10n.legalLiteracy,
-                    subtitle: l10n.shortModules,
-                    color: AppTheme.successColor,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const LegalModulesScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _QuickActionCard(
-                    icon: '🏅',
-                    title: l10n.leaderboard,
-                    subtitle: isHindi ? 'अपनी रैंक देखें' : 'See your rank',
-                    color: AppTheme.warningColor,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const LeaderboardScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ).animate(delay: 500.ms).fadeIn().slideY(begin: 0.1, end: 0),
-
-            const SizedBox(height: 16),
-
-            Row(
-              children: [
-                Expanded(
-                  child: _QuickActionCard(
-                    icon: '📝',
-                    title: isHindi ? 'मेरे नोट्स' : 'My Notes',
-                    subtitle: isHindi ? 'नोट्स लिखें' : 'Write notes',
-                    color: Colors.indigo,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const NotesScreen()),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _QuickActionCard(
-                    icon: '📖',
-                    title: isHindi ? 'कानूनी शब्दकोश' : 'Glossary',
-                    subtitle: isHindi ? 'शब्द खोजें' : 'Legal terms',
-                    color: Colors.brown,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const LegalGlossaryScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ).animate(delay: 550.ms).fadeIn().slideY(begin: 0.1, end: 0),
-
-            const SizedBox(height: 16),
-
-            Row(
-              children: [
-                Expanded(
-                  child: _QuickActionCard(
-                    icon: '🤖',
-                    title: isHindi ? 'AI सहायक' : 'AI Assistant',
-                    subtitle: isHindi ? 'प्रश्न पूछें' : 'Ask questions',
-                    color: Colors.deepPurple,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const FaqAssistantScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(width: 16),
-                const Expanded(child: SizedBox()), // half-width placeholder
-              ],
-            ).animate(delay: 600.ms).fadeIn().slideY(begin: 0.1, end: 0),
-
-            const SizedBox(height: 24),
+            const SizedBox(height: 22),
 
             // What is a Judge?
             Container(
@@ -406,10 +460,11 @@ class _HomeContent extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.primaryColor.withAlpha(30)),
+                border: Border.all(
+                    color: AppTheme.primaryColor.withAlpha(25)),
                 boxShadow: [
                   BoxShadow(
-                    color: AppTheme.primaryColor.withAlpha(12),
+                    color: AppTheme.primaryColor.withAlpha(10),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -421,21 +476,24 @@ class _HomeContent extends StatelessWidget {
                   Row(
                     children: [
                       Container(
-                        width: 50,
-                        height: 50,
+                        width: 48,
+                        height: 48,
                         decoration: BoxDecoration(
-                          color: AppTheme.primaryColor.withAlpha(25),
+                          color: AppTheme.primaryColor.withAlpha(20),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Center(
-                          child: Text('👨‍⚖️', style: TextStyle(fontSize: 28)),
+                          child: Text('👨‍⚖️',
+                              style: TextStyle(fontSize: 26)),
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           l10n.whatIsJudge,
-                          style: Theme.of(context).textTheme.titleMedium
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleMedium
                               ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                       ),
@@ -444,21 +502,64 @@ class _HomeContent extends StatelessWidget {
                   const SizedBox(height: 12),
                   Text(
                     l10n.judgeRole,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppTheme.textSecondary,
-                      height: 1.5,
-                    ),
+                    style:
+                        Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: AppTheme.textSecondary,
+                              height: 1.5,
+                            ),
                   ),
                 ],
               ),
-            ).animate(delay: 650.ms).fadeIn().slideY(begin: 0.1, end: 0),
+            ),
 
             const SizedBox(height: 20),
-          ],
-        ),
+        ],
       ),
     );
   }
+
+  Widget _buildQuickActionRow(
+      BuildContext context, List<_QuickActionData> items) {
+    return Row(
+      children: [
+        for (int i = 0; i < items.length; i++) ...[
+          if (i > 0) const SizedBox(width: 12),
+          Expanded(
+            child: _QuickActionCard(
+              icon: items[i].icon,
+              title: items[i].title,
+              subtitle: items[i].subtitle,
+              color: items[i].color,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => items[i].screen),
+                );
+              },
+            ),
+          ),
+        ],
+        // If only one item, add a spacer
+        if (items.length == 1) ...[
+          const SizedBox(width: 12),
+          const Expanded(child: SizedBox()),
+        ],
+      ],
+    );
+  }
+}
+
+class _QuickActionData {
+  final String icon, title, subtitle;
+  final Color color;
+  final Widget screen;
+  const _QuickActionData({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+    required this.screen,
+  });
 }
 
 // ── Study Streak Card ───────────────────────────────────────
@@ -513,7 +614,7 @@ class _StudyStreakCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.orange.withAlpha(50),
+            color: Colors.orange.withAlpha(40),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -521,7 +622,7 @@ class _StudyStreakCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Text(_streakEmoji, style: const TextStyle(fontSize: 32)),
+          Text(_streakEmoji, style: const TextStyle(fontSize: 30)),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
@@ -534,25 +635,27 @@ class _StudyStreakCard extends StatelessWidget {
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                    fontSize: 15,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   _motivationalText(),
                   style: TextStyle(
-                    color: Colors.white.withAlpha(220),
+                    color: Colors.white.withAlpha(210),
                     fontSize: 12,
                   ),
                 ),
               ],
             ),
           ),
-          // Flame icons for visual streak
-          Column(
+          Row(
             children: List.generate(
               (streakDays).clamp(0, 5),
-              (i) => const Text('🔥', style: TextStyle(fontSize: 14)),
+              (i) => Padding(
+                padding: const EdgeInsets.only(left: 2),
+                child: Text('🔥', style: const TextStyle(fontSize: 13)),
+              ),
             ),
           ),
         ],
@@ -570,7 +673,6 @@ class _DailyTipCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tips = _getDailyTips();
-    // Pick tip based on day of year so it rotates daily
     final dayOfYear = DateTime.now()
         .difference(DateTime(DateTime.now().year))
         .inDays;
@@ -585,7 +687,7 @@ class _DailyTipCard extends StatelessWidget {
         border: Border.all(color: AppTheme.accentColor.withAlpha(40)),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.accentColor.withAlpha(15),
+            color: AppTheme.accentColor.withAlpha(12),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -595,14 +697,14 @@ class _DailyTipCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 42,
-            height: 42,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
-              color: AppTheme.accentColor.withAlpha(30),
+              color: AppTheme.accentColor.withAlpha(25),
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Center(
-              child: Text('💡', style: TextStyle(fontSize: 22)),
+              child: Text('💡', style: TextStyle(fontSize: 20)),
             ),
           ),
           const SizedBox(width: 14),
@@ -614,11 +716,11 @@ class _DailyTipCard extends StatelessWidget {
                   isHindi ? 'आज का कानूनी ज्ञान' : 'Legal Tip of the Day',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    fontSize: 14,
+                    fontSize: 13,
                     color: AppTheme.accentDark,
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 Text(
                   isHindi ? tip['hi']! : tip['en']!,
                   style: TextStyle(
@@ -838,19 +940,19 @@ class _ScoreItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(icon, style: const TextStyle(fontSize: 24)),
+        Text(icon, style: const TextStyle(fontSize: 22)),
         const SizedBox(height: 4),
         Text(
           value,
           style: TextStyle(
-            fontSize: isSmallValue ? 14 : 24,
+            fontSize: isSmallValue ? 14 : 22,
             fontWeight: FontWeight.bold,
             color: Colors.white,
           ),
         ),
         Text(
           label,
-          style: TextStyle(fontSize: 12, color: Colors.white.withAlpha(180)),
+          style: TextStyle(fontSize: 11, color: Colors.white.withAlpha(170)),
         ),
       ],
     );
@@ -874,61 +976,120 @@ class _QuickActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
+    return Material(
+      color: Colors.white,
       borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withAlpha(40)),
-          boxShadow: [
-            BoxShadow(
-              color: color.withAlpha(18),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [color.withAlpha(40), color.withAlpha(20)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        splashColor: color.withAlpha(30),
+        highlightColor: color.withAlpha(10),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: color.withAlpha(30)),
+            boxShadow: [
+              BoxShadow(
+                color: color.withAlpha(10),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [color.withAlpha(35), color.withAlpha(15)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                borderRadius: BorderRadius.circular(12),
+                child: Center(
+                  child: Text(icon, style: const TextStyle(fontSize: 22)),
+                ),
               ),
-              child: Center(
-                child: Text(icon, style: const TextStyle(fontSize: 24)),
+              const SizedBox(height: 10),
+              Text(
+                title,
+                style: Theme.of(context)
+                    .textTheme
+                    .titleSmall
+                    ?.copyWith(fontWeight: FontWeight.bold),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              style: Theme.of(
-                context,
-              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondary),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
+              const SizedBox(height: 3),
+              Text(
+                subtitle,
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(color: AppTheme.textSecondary),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── LLB Pathway Badge ────────────────────────────────────────
+class _PathwayBadge extends StatelessWidget {
+  final bool isHindi;
+
+  const _PathwayBadge({required this.isHindi});
+
+  @override
+  Widget build(BuildContext context) {
+    final pathwayProvider = context.watch<LlbPathwayProvider>();
+    
+    if (!pathwayProvider.hasSelectedPathway) {
+      return const SizedBox.shrink();
+    }
+    
+    final pathway = pathwayProvider.selectedPathway!;
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.primaryColor.withAlpha(25),
+            AppTheme.accentColor.withAlpha(15),
           ],
         ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppTheme.primaryColor.withAlpha(40),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            pathway.icon,
+            style: const TextStyle(fontSize: 14),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            pathway.badgeText,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.primaryColor,
+            ),
+          ),
+        ],
       ),
     );
   }

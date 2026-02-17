@@ -1232,8 +1232,13 @@ For exact figures, check the latest official judicial recruitment notification f
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(isHindi ? 'न्यायिक सहायक (CVI)' : 'Judicial Assistant (CVI)'),
-            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                isHindi ? 'न्यायिक सहायक' : 'Judicial Assistant',
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 6),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
@@ -1252,7 +1257,7 @@ For exact figures, check the latest official judicial recruitment notification f
                   ),
                   const SizedBox(width: 3),
                   Text(
-                    _isOnline ? 'AI' : (isHindi ? 'ऑफ़लाइन' : 'Offline'),
+                    _isOnline ? 'AI' : 'Offline',
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
